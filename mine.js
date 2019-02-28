@@ -1,12 +1,5 @@
 const commando = require('discord.js-commando');
-var Invs = [ { pickx: 6,
-    picky: 6,
-    id: '374929883698036736',
-    d: '1121112111111111211121111111111111111111111112110',
-    inv: { stone: 45, coal: 5, iron: 0, gold: 0, diamond: 0 },
-    pick: 0,
-    level: 1,
-    xp: 0 } ];
+var Invs = [ ]; //Data goes in here! :D
 var replaceInString = function(string, item, newitem){
     var finalstring = "";
     for(var i = 0;i < string.length;i ++){
