@@ -1,11 +1,11 @@
 const Commando = require('discord.js-commando');
-const bot = new Commando.Client();
+const bot = new Commando.Client({commandPrefix: 'keplerbot!'});
 const token = require('./token.js');
 const TOKEN = token.token;
 
 /** BIG VARIABLES */
-var maintenance = true;
-var version = "0.3.beta";
+var maintenance = false;
+var version = "1.0";
 
 /** SIMPLE COMMANDS */
 //Universal Variables:
@@ -17,14 +17,15 @@ var dice = [
     "<:dice5:550358709466038273>",
     "<:dice6:550358709545730069>",
 ];
+var coins = ["<:Heads:553050199350706176>", "<:Tails:553050202085523468>"];
 //Functions
 var CoinFlipCommand = function(message){
     var chance = Math.floor(Math.random()*2);
     if(chance == 0){
-        message.reply("Your coin landed on Heads!", {files:[__dirname+"/data/HeadsCoin.png"]});
+        message.reply("Your coin landed on Heads! " + coins[0]);
     }
     else if(chance == 1){
-        message.reply("Your coin landed on Tails!", {files:[__dirname+"/data/TailsCoin.png"]});
+        message.reply("Your coin landed on Tails! " + coins[1]);//, {files:[__dirname+"/data/TailsCoin.png"]}
     }
 };
 var DiceRollCommand = function(message){
@@ -96,8 +97,8 @@ var Helps = [
         d: "Crafts a pickaxe, requires 60 of a material.",
     },
     {
-        name: "kb!multimine [dir] or kb!mm [dir]",
-        values: "dir: right, left, up or down, can use single letters as well",
+        name: "kb!multimine [dir/recreate] or kb!mm [dir/recreate]",
+        values: "dir: right, left, up or down, can use single letters as well\nrecreate: recreate, creates a new multiplayer land",
         d: "Mines a block in the direction said with your pickaxe in a multiplayer arena",
     },
     {
@@ -694,45 +695,48 @@ bot.on('message', function(message){
             if(nameCmd === "flip" || nameCmd === "f" || nameCmd === "coin"){
                 CoinFlipCommand(message);
             }
-            if(nameCmd === "dice" || nameCmd === "d" || nameCmd === "roll"){
+            else if(nameCmd === "dice" || nameCmd === "d" || nameCmd === "roll"){
                 DiceRollCommand(message);
             }
-            if(nameCmd === "pickfrom" || nameCmd === "pick" || nameCmd === "pf"){
+            else if(nameCmd === "pickfrom" || nameCmd === "pick" || nameCmd === "pf"){
                 PickFromCommand(message, args);
             }
-            if(nameCmd === "about" || nameCmd === "ab"){
+            else if(nameCmd === "about" || nameCmd === "ab"){
                 AboutCommand(message);
             }
-            if(nameCmd === "help" || nameCmd === "h"){
+            else if(nameCmd === "help" || nameCmd === "h"){
                 HelpCommand(message, args);
             }
-            if(nameCmd === "invite"){
+            else if(nameCmd === "invite"){
                 InviteCommand(message);
             }
-            if(nameCmd === "mine" || nameCmd === "m"){
+            else if(nameCmd === "mine" || nameCmd === "m"){
                 MineCommand(message, args);
             }
-            if(nameCmd === "inv" || nameCmd === "inventory"){
+            else if(nameCmd === "inv" || nameCmd === "inventory"){
                 InvCommand(message, args);
             }
-            if(nameCmd === "regenland" || nameCmd === "rl"){
+            else if(nameCmd === "regenland" || nameCmd === "rl"){
                 RegenLandCommand(message, args);
             }
-            if(nameCmd === "backup"){
+            else if(nameCmd === "backup"){
                 BackupCommand(message, args);
             }
-            if(nameCmd === "craft"){
+            else if(nameCmd === "craft"){
                 CraftCommand(message, args);
             }
-            if(nameCmd === "multimine" || nameCmd === "mm"){
+            else if(nameCmd === "multimine" || nameCmd === "mm"){
                 MultiMineCommand(message, args);
             }
-            if(nameCmd === "toplist" || nameCmd === "top"){
+            else if(nameCmd === "toplist" || nameCmd === "top"){
                 TopListCommand(message, args);
+            }
+            else{
+                message.reply("I have not heard of this command! Do kb!help to see the list of commands!");
             }
         }
         else if(maintenance === true){
-            //message.reply("The Kepler Bot is under maintenance! Try again later!");
+            message.reply("The Kepler Bot is under maintenance! Try again later!");
         }
     }
     else{
@@ -756,3 +760,4 @@ bot.on('ready', function(){
 });
 
 bot.login(TOKEN); //how to turn on bot, type "node .", to turn it off do CTRL-C.
+
