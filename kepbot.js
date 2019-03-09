@@ -79,12 +79,12 @@ var Helps = [
     {
         name: "kb!inv or kb!inventory",
         values: "none",
-        d: "This exact command, known as the help command!",
+        d: "Checks your inventory",
     },
     {
         name: "kb!regenland or kb!rl",
         values: "none",
-        d: "This exact command, known as the help command!",
+        d: "Regenrates your land!",
     },
     {
         name: "kb!backup",
@@ -760,4 +760,3 @@ bot.on('ready', function(){
 });
 
 bot.login(TOKEN); //how to turn on bot, type "node .", to turn it off do CTRL-C.
-
