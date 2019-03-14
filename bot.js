@@ -1,20 +1,25 @@
 const http = require('http');
 const express = require('express');
 const app = express();
+var server = require('http').createServer(app);
 app.get("/", (request, response) => {
   console.log(Date.now() + " Ping Received");
   response.sendStatus(200);
 });
-app.listen(process.env.PORT);
+const listener = server.listen(process.env.PORT, function() {
+  console.log('Your app is listening on port ' + listener.address().port);
+});
 setInterval(() => {
   http.get(`http://${process.env.PROJECT_DOMAIN}.glitch.me/`);
 }, 280000);
 
 //Your bot code goes down here 👇
-const Commando = require('discord.js-commando');
+const Commando = require('discord.js'); //there is no commando
 const fs = require('fs');
-const bot = new Commando.Client({commandPrefix: 'keplerbot!'});
+const bot = new Commando.Client({commandPrefix: 'kb!'});
 const TOKEN = process.env.TOKEN;
+const DBL = require('dblapi.js');
+const dbl = new DBL(process.env.DBLTOKEN, { webhookServer: server, webhookAuth: '' }, bot);
 
 /** BIG VARIABLES */
 var maintenance = false;
@@ -78,6 +83,11 @@ var Helps = [
         name: "kb!invite",
         values: "none",
         d: "Invite the Kepler Bot to your server!",
+    },
+    {
+        name: "kb!vote",
+        values: "none",
+        d: "Vote for the Kepler Bot and get rewards! (IN BETA)",
     },
     {
         name: "kb!help [page]",
@@ -145,6 +155,9 @@ var HelpCommand = function(message, args){
 };
 var InviteCommand = function(message){
     message.reply("\n**Invite link:**\nhttps://bit.ly/2VD18ef");
+};
+var VoteCommand = function(message){
+  message.reply("\n**Vote for The Kepler Bot:**\nhttps://bit.ly/2JbLSUf");
 };
 
 /** KEPLER MINER COMMANDS */
@@ -295,11 +308,13 @@ var tokenToUser = async function(id){
     // here you can also try log it to console
   });
 };
-var makeNewInventory = function(message){
-    Invs.push({
+var makeNewInventory = function(message, name, id){
+  var Name = name || message.author.username.toString();
+  var Id = id || message.author.id;
+  Invs.push({
         pickx: 3,
         picky: 3,
-        id: message.author.id,
+        id: Id,
         d: "",
         inv:{
             stone:0,
@@ -312,7 +327,7 @@ var makeNewInventory = function(message){
         level: 1,
         mp: {x:4,y:4},
         xp: 0,
-        name: message.author.username.toString(),
+        name: Name,
     });
 };
 var addPickaxeRoles = function(message, I){
@@ -748,6 +763,34 @@ var TopListCommand = function(message, args){
     addPickaxeRoles(message, I);
 };
 /** MESSAGE FUNCTION */
+dbl.webhook.on('ready', hook => {
+  console.log(`Webhook running at http://${hook.hostname}:${hook.port}${hook.path}`);
+});
+dbl.webhook.on('vote', vote => {
+  var VotedUser = vote.user;
+  var theinv = -1;
+  console.log(`User with ID ${vote.user} just voted!`);
+  try{
+    for(var i = 0;i < Invs.length;i ++){
+      if(Invs[i].id === VotedUser.toString()){
+        theinv = i;
+        Invs[i].xp +=100;
+      }
+    }
+    if(theinv === -1){
+      makeNewInventory("unknown", VotedUser, VotedUser.toString());
+      Invs[Invs.length-1].xp +=100;
+    }
+    bot.users.get(VotedUser).send("Thanks for voting! You just earned 100 XP! " + xp);
+  }
+  catch(error){
+    console.log('Uh oh! ' + error);
+  }
+});
+dbl.webhook.on('error', e => {
+ console.log(`Oops! ${e}`);
+});
+bot.on('error', error => { console.log(error);});
 bot.on('message', message => {
   //console.log(message.author);
   if(message.author.id !== bot.user.id && message.author.bot) return;
@@ -779,6 +822,9 @@ bot.on('message', message => {
             else if(nameCmd === "about" || nameCmd === "ab"){
                 AboutCommand(message);
             }
+            else if(nameCmd === "vote" || nameCmd === "v"){
+                VoteCommand(message);
+            }
             else if(nameCmd === "help" || nameCmd === "h"){
                 HelpCommand(message, args);
             }
@@ -794,11 +840,14 @@ bot.on('message', message => {
             else if(nameCmd === "regenland" || nameCmd === "rl"){
                 RegenLandCommand(message, args);
             }
-            else if(nameCmd === "backup" && (message.author.id.toString() === '374929883698036736' || message.author.id.toString() === "542878436885266474")){
+            else if(nameCmd === "backup" && (message.author.id.toString() === '374929883698036736' || message.author.id.toString() === "542878436885266474") && message.channel.type === "dm"){
+                BackupCommand(message, args);
+            }
+            else if(nameCmd === "backup" && (message.member.roles.find(r => r.name === "Backup-ers") && message.guild.id === "550036987772403714") && message.channel.type !== "dm"){
                 BackupCommand(message, args);
             }
             else if(nameCmd === "backup"){
-                message.reply("You have to be KeplerTeddy to do this command! Or someone who is verified that I choose");
+                message.reply("This only works in the Kepler Bot Server and you have the Backup-ers role! Or if you are KeplerTeddy in DM");
                 //message.reply("This is better in DM.");
             }
             else if(nameCmd === "craft"){
@@ -825,19 +874,20 @@ bot.on('message', message => {
 
 /** WHEN THE BOT IS READY DO THIS */
 bot.on('ready', function(){
+  setInterval(() => {
+        dbl.postStats(bot.guilds.size);
+    }, 1800000);
     if(maintenance){
         bot.user.setActivity("Maintenance!!!", { type: 'LISTENING' })
   .then(presence => console.log(`Activity set to ${presence.activity.name}`))
   .catch(console.error);
     }
     else{
-        bot.user.setActivity("Kepler Bot | kb!help", { type: 'PLAYING' })
-  .then(presence => console.log(`Activity set to ${presence.activity.name}`))
+        bot.user.setActivity(bot.guilds.size + " Servers | kb!help", { type: 'WATCHING' })
+  .then(presence => console.log(`Activity set!`))
   .catch(console.error);
     }
     console.log("Bot is now on :P");
 });
 
 bot.login(process.env.TOKEN);
-
-
