@@ -540,9 +540,11 @@ var BackupCommand = function(message, args){
       //console.log(inv.Invs);  
       message.reply("Data has been backed up successfully! There are " + inv.Invs.length + " user datas stored!");
       Invs = inv.Invs;
+      for(var i = 0;i < Math.floor(data.length/1000)+1;i ++){
+        message.channel.send("```" + data.slice(i*1000, i*1000+1000) + "```");
+      }
     });
     //console.log(inv);
-    
     
 
     /*var writeStream = fs.createWriteStream(filename, {autoClose: true});
@@ -748,6 +750,7 @@ var TopListCommand = function(message, args){
 /** MESSAGE FUNCTION */
 bot.on('message', message => {
   //console.log(message.author);
+  if(message.author.id !== bot.user.id && message.author.bot) return;
     if(message.content.startsWith('kb!') || message.channel.type === 'dm') { //Checks if the user is in a DM or is using the kb! thingy
         if(maintenance === false || (maintenance === true && (message.author.id.toString() === '374929883698036736' || message.author.id.toString() === "542878436885266474"))){
             var fullCmd;
@@ -836,4 +839,5 @@ bot.on('ready', function(){
 });
 
 bot.login(process.env.TOKEN);
+
 
