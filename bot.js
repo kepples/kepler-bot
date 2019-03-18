@@ -19,11 +19,14 @@ const fs = require('fs');
 const bot = new Commando.Client({commandPrefix: 'kb!'});
 const TOKEN = process.env.TOKEN;
 const DBL = require('dblapi.js');
-const dbl = new DBL(process.env.DBLTOKEN, { webhookServer: server, webhookAuth: '' }, bot);
+const dbl = new DBL(process.env.DBLTOKEN, { webhookServer: server, webhookAuth: 'authorkeplerbot' }, bot);
 
 /** BIG VARIABLES */
 var maintenance = false;
 var version = "1.0";
+var waittime = 3000;
+var regentime = 180000;
+var lastmultiregen = 0;
 
 /** SIMPLE COMMANDS */
 //Universal Variables:
@@ -60,41 +63,6 @@ var PickFromCommand = function(message, args){
 //Variables
 var Helps = [
     {
-        name: "kb!flip",
-        values: "none",
-        d: "Flips a coin, either lands on Heads or Tails.",
-    },
-    {
-        name: "kb!dice",
-        values: "none",
-        d: "Rolls a six sided dice",
-    },
-    {
-        name: "kb!pickfrom [maxnumber]",
-        values: "maxnumber: any number",
-        d: "Picks a number between 0 and the maximum number",
-    },
-    {
-        name: "kb!about",
-        values: "none",
-        d: "Info on the kepler bot!",
-    },
-    {
-        name: "kb!invite",
-        values: "none",
-        d: "Invite the Kepler Bot to your server!",
-    },
-    {
-        name: "kb!vote",
-        values: "none",
-        d: "Vote for the Kepler Bot and get rewards! (IN BETA)",
-    },
-    {
-        name: "kb!help [page]",
-        values: "none",
-        d: "This exact command, known as the help command!",
-    },
-    {
         name: "kb!mine [dir] or kb!m [dir]",
         values: "dir: right, left, up or down, can use single letters as well",
         d: "Mines a block in the direction said with your pickaxe",
@@ -128,6 +96,41 @@ var Helps = [
         name: "kb!top or kb!toplist",
         values: "none",
         d: "Top 10 users sorted by xp",
+    },
+    {
+        name: "kb!flip",
+        values: "none",
+        d: "Flips a coin, either lands on Heads or Tails.",
+    },
+    {
+        name: "kb!dice",
+        values: "none",
+        d: "Rolls a six sided dice",
+    },
+    {
+        name: "kb!pickfrom [maxnumber]",
+        values: "maxnumber: any number",
+        d: "Picks a number between 0 and the maximum number",
+    },
+    {
+        name: "kb!about",
+        values: "none",
+        d: "Info on the kepler bot!",
+    },
+    {
+        name: "kb!invite",
+        values: "none",
+        d: "Invite the Kepler Bot to your server!",
+    },
+    {
+        name: "kb!vote",
+        values: "none",
+        d: "Vote for the Kepler Bot and get 100XP!",
+    },
+    {
+        name: "kb!help [page]",
+        values: "none",
+        d: "This exact command, known as the help command!",
     },
 ];
 
@@ -328,6 +331,7 @@ var makeNewInventory = function(message, name, id){
         mp: {x:4,y:4},
         xp: 0,
         name: Name,
+        lastmine: Date.now(),
     });
 };
 var addPickaxeRoles = function(message, I){
@@ -350,6 +354,11 @@ var addPickaxeRoles = function(message, I){
       }
     }
 };
+var updateInventory = function(I){
+  if(I.lastregen === undefined){
+    I.lastregen = 0;
+  }
+};
 var stone = "<:stone:550125781842395136>";
 var iron = "<:iron:550125781859172382>";
 var coal = "<:coal:550125781720891399>";
@@ -358,8 +367,8 @@ var redstone = "<:redstone:550738154911432704>";
 var lapis = "<:lapis:550738153896542212>";
 var diamond = "<:diamond:550738152797765652>";
 var random = "<:random:550738153414328405>";
-var pickaxes = ["<:wooden_pickaxe:550733904051437570>", "<:stone_pickaxe:550733903896379445>", "<:iron_pickaxe:550049621477425176>", "<:diamond_pickaxe:550733904009625612>"];
-var air = "<:darkenedstone:550335949909786625>";
+var pickaxes = ["<:wp:550733904051437570>", "<:sp:550733903896379445>", "<:ip:550049621477425176>", "<:dp:550733904009625612>"];
+var air = "<:air:550335949909786625>";
 var xps = ["<:xp_0:550744679550025728>", "<:xp_1:550744679327596545>", "<:xp_2:550744679495237643>", "<:xp_3:550744679680049167>", 
         "<:xp_4:550744679776256050>", "<:xp_5:550744679830781967>", 
         "<:xp_6:550744679910473753>", "<:xp_7:550744679562608642>", "<:xp_8:550744679835107340>"];
@@ -367,7 +376,7 @@ var xp = "<:xp:550773197398736928>";
 //Functions
 var count = 0;
 var MineCommand = function(message, args){
-  count ++;
+    count ++;
     var yourarray = findYourId(message.author.id);
     if(yourarray == -1){
         makeNewInventory(message);
@@ -376,99 +385,113 @@ var MineCommand = function(message, args){
     }
     //console.log(message.author.username.toString());
     var I = Invs[yourarray];
+  updateInventory(I);
     if(I.d == ""){createLand(I);}
-    if((args[0] == "right" || args[0] == "r") && I.pickx < 6){
-        I.pickx ++;
+    if(Date.now() > I.lastmine+waittime){
+      I.lastmine = Date.now();
+      if((args[0] == "right" || args[0] == "r") && I.pickx < 6){
+          I.pickx ++;
+      }
+      if((args[0] == "left" || args[0] == "l") && I.pickx > 0){
+          I.pickx --;
+      }
+      if((args[0] == "down" || args[0] == "d") && I.picky < 6){
+          I.picky ++;
+      }
+      if((args[0] == "up" || args[0] == "u") && I.picky > 0){
+          I.picky --;
+      }
+      I.name = message.author.username.toString();
+      var m = "\n**Your Arena**";
+      for(var i = 0;i < 7;i ++){
+          m = m + "\n";
+          for(var j = 0;j < 7;j ++){
+              if(i === I.picky && j === I.pickx){
+                  m +=pickaxes[I.pick];
+                  if(I.d[i*7+j] == "6"){ 
+                      var randit = Math.floor(Math.random()*5);
+                      if(randit == 0){
+                          I.inv.stone +=100;
+                          message.reply("You got 100 stone!");
+                      }
+                      if(randit == 1){
+                          I.inv.coal +=50;
+                          message.reply("You got 50 coal!");
+                      }
+                      if(randit == 2){
+                          I.inv.iron +=25;
+                          message.reply("You got 25 iron!");
+                      }
+                      if(randit == 3){
+                          I.inv.gold +=15;
+                          message.reply("You got 15 gold!");
+                      }
+                      if(randit == 4){
+                          I.inv.diamond +=10;
+                          message.reply("You got 10 diamonds!");
+                      }
+                  }
+                  if(I.d[i*7+j] == "5"){ I.inv.diamond ++; I.xp+=10;}
+                  if(I.d[i*7+j] == "4"){ I.inv.gold ++; I.xp+=5;}
+                  if(I.d[i*7+j] == "3"){ I.inv.iron ++;I.xp+=3;}
+                  if(I.d[i*7+j] == "2"){ I.inv.coal ++;I.xp+=1;}
+                  if(I.d[i*7+j] == "1"){ I.inv.stone ++;}
+                  I.d = replaceInString(I.d, i*7+j, "0");
+              }
+              else if(I.d[i*7+j] === "6"){
+                  m += random;
+              }
+              else if(I.d[i*7+j] === "5"){
+                  m += diamond;
+              }
+              else if(I.d[i*7+j] === "4"){
+                  m += gold;
+              }
+              else if(I.d[i*7+j] === "3"){
+                  m += iron;
+              }
+              else if(I.d[i*7+j] === "2"){
+                  m += coal;
+              }
+              else if(I.d[i*7+j] === "1"){
+                  m += stone;
+              }
+              else if(I.d[i*7+j] === "0"){
+                  m += air;
+              }
+          }
+      }
+      //console.log(m.length);
+      message.reply(m);
+      if(args[0] === ""){
+        message.channel.send("**Don't forget to add a direction at the end in the direction you want to mine!**");
+      }
+      if(I.xp >= I.level*10){
+          I.xp -=I.level*10;
+          I.level ++;
+          message.reply(xp + "You just got to level " + I.level + "! " + xp);
+      }
+      var tips = [
+          "If you get 60 stone, you can craft a stone pickaxe using \'kb!craft\'! Same goes for other materials like iron and diamond!",
+          "Are you out of land? Use the \'kb!regenland\' command when you require new land!",
+          "There might be a special ore you can find if you manage to get diamond!",
+          "Gold is currently useless but you can soon use it to boost your pickaxe!",
+          "Is there something that should be added to the bot? DM me or tell me on the official bot server!",
+          "You can get roles in The Official Kepler Bot Server based on your pickaxe!",
+          "Check to see if you are on top using `kb!top`",
+          "Vote for The Kepler Bot and earn XP! Use the `kb!vote` command to get a link for voting! :D",
+          "Don't forget to check how many more materials you need to craft the next pickaxe!",
+          "New features are being added every week! Be sure to try them out!",
+          "Donating will give you many features! Donate from my website or in The Kepler Bot Official Server, type `donate`!",
+      ];
+      if(Math.random()*10 > 7.8){
+          message.channel.send("**TIP: **" + tips[Math.floor(Math.random()*tips.length)]);
+      }
+      addPickaxeRoles(message, I);
     }
-    if((args[0] == "left" || args[0] == "l") && I.pickx > 0){
-        I.pickx --;
-    }
-    if((args[0] == "down" || args[0] == "d") && I.picky < 6){
-        I.picky ++;
-    }
-    if((args[0] == "up" || args[0] == "u") && I.picky > 0){
-        I.picky --;
-    }
-    I.name = message.author.username.toString();
-    var m = "\n**Your Arena**";
-    for(var i = 0;i < 7;i ++){
-        m = m + "\n";
-        for(var j = 0;j < 7;j ++){
-            if(i === I.picky && j === I.pickx){
-                m +=pickaxes[I.pick];
-                if(I.d[i*7+j] == "6"){ 
-                    var randit = Math.floor(Math.random()*5);
-                    if(randit == 0){
-                        I.inv.stone +=100;
-                        message.reply("You got 100 stone!");
-                    }
-                    if(randit == 1){
-                        I.inv.coal +=50;
-                        message.reply("You got 50 coal!");
-                    }
-                    if(randit == 2){
-                        I.inv.iron +=25;
-                        message.reply("You got 25 iron!");
-                    }
-                    if(randit == 3){
-                        I.inv.gold +=15;
-                        message.reply("You got 15 gold!");
-                    }
-                    if(randit == 4){
-                        I.inv.diamond +=10;
-                        message.reply("You got 10 diamonds!");
-                    }
-                }
-                if(I.d[i*7+j] == "5"){ I.inv.diamond ++; I.xp+=10;}
-                if(I.d[i*7+j] == "4"){ I.inv.gold ++; I.xp+=5;}
-                if(I.d[i*7+j] == "3"){ I.inv.iron ++;I.xp+=3;}
-                if(I.d[i*7+j] == "2"){ I.inv.coal ++;I.xp+=1;}
-                if(I.d[i*7+j] == "1"){ I.inv.stone ++;}
-                I.d = replaceInString(I.d, i*7+j, "0");
-            }
-            else if(I.d[i*7+j] === "6"){
-                m += random;
-            }
-            else if(I.d[i*7+j] === "5"){
-                m += diamond;
-            }
-            else if(I.d[i*7+j] === "4"){
-                m += gold;
-            }
-            else if(I.d[i*7+j] === "3"){
-                m += iron;
-            }
-            else if(I.d[i*7+j] === "2"){
-                m += coal;
-            }
-            else if(I.d[i*7+j] === "1"){
-                m += stone;
-            }
-            else if(I.d[i*7+j] === "0"){
-                m += air;
-            }
-        }
-    }
-    //console.log(m.length);
-    message.reply(m);
-    if(I.xp >= I.level*10){
-        I.xp -=I.level*10;
-        I.level ++;
-        message.reply(xp + "You just got to level " + I.level + "! " + xp);
-    }
-    var tips = [
-        "If you get 60 stone, you can craft a stone pickaxe using \'kb!craft\'! Same goes for other materials like iron and diamond!",
-        "Are you out of land? Use the \'kb!regenland\' command when you require new land!",
-        "There might be a special ore you can find if you manage to get diamond!",
-        "Gold is currently useless but you can soon use it to boost your pickaxe!",
-        "Is there something that should be added to the bot? DM me or tell me on the official bot server!",
-        "You can get roles in The Official Kepler Bot Server based on your pickaxe!",
-        "Check to see if you are on top using `kb!top`",
-    ];
-    if(Math.random()*10 > 8){
-        message.reply("**TIP: **" + tips[Math.floor(Math.random()*tips.length)]);
-    }
-    addPickaxeRoles(message, I);
+  else{
+    message.channel.send("Please wait " + (((I.lastmine+waittime)-Date.now())/1000).toFixed(2) + " Seconds!");
+  }
     
 };
 var InvCommand = function(message, args){
@@ -478,6 +501,7 @@ var InvCommand = function(message, args){
             yourarray = Invs.length-1;
         }
         var I = Invs[yourarray];
+        updateInventory(I);
         I.name = message.author.username.toString();
         var XPP = "";
         for(var i = 0;i < 10;i ++){
@@ -515,7 +539,7 @@ var InvCommand = function(message, args){
                 }
             }
         }
-        message.reply("\n **" + "Your Inventory** " + pickaxes[I.pick] + "\nYou have mined:\n" 
+        message.reply("\n **" + I.name + "'s Inventory** " + pickaxes[I.pick] + "\nYou have mined:\n" 
         + stone + " " + I.inv.stone + "\n" + coal + " " + I.inv.coal + "\n" + iron + " " + I.inv.iron + "\n" + gold + " " 
         + I.inv.gold + "\n" + diamond + " " + I.inv.diamond + "\n\nLevel: " + I.level + "\n" + xp + XPP);
         addPickaxeRoles(message, I);
@@ -527,24 +551,34 @@ var RegenLandCommand = function(message, args){
         yourarray = Invs.length-1;
     }
     var I = Invs[yourarray];
-    I.name = message.author.username.toString();
-    createLand(I);
-    message.reply("Created land! Do the mine command to mine in it!");
-    addPickaxeRoles(message, I);
+    updateInventory(I);
+    if(I.lastregen+regentime< Date.now()){
+      I.lastregen = Date.now();
+      I.name = message.author.username.toString();
+      createLand(I);
+      message.reply("Created land! Do the `kb!mine` command to mine in it!");
+      addPickaxeRoles(message, I);
+    }
+    else{
+      message.channel.send("Please wait " + (((I.lastregen+regentime)-Date.now())/1000).toFixed(1) + " Seconds!");
+    }
 };
 var filename = "./datas.json";
-var BackupCommand = function(message, args){
-    message.reply("Incoming DM Spam!\nBackup Starting!");
+var BackupQuick = function(){
     var inv = {Invs:Invs};
-    /*console.log("STARTING BACKUP");
-    console.log(Invs);
-    console.log("FINSHED BACKUP");*/
-    /*message.channel.send("var Invs = [\n");
-    for(var i = 0;i < Invs.length;i ++){
-      console.log(Invs[i].id);
-      message.channel.send("{\npickx: " + Invs[i].pickx + ",\npicky: "+ Invs[i].picky + ",\nid: \'" + Invs[i].id + "\',\nd: \'" + Invs[i].d + 
-      "\',\ninv: { stone: " + Invs[i].inv.stone + ", coal: " + Invs[i].inv.coal + ", iron: " + Invs[i].inv.iron + ", gold: " + Invs[i].inv.gold + ", diamond: " + Invs[i].inv.diamond + "},\npick: " + Invs[i].pick + ",\nlevel: "
-      + Invs[i].level + ",\nmp: {x: " + Invs[i].mp.x + ", y: " + Invs[i].mp.y + "},\nxp: " + Invs[i].xp + ",\nname: '" + Invs[i].name + "'\n},");*/
+    var data = JSON.stringify(inv);
+    fs.writeFile('datas.json', data, (err) => {  
+      if (err) throw err;
+      console.log('Data written to file!');
+      console.log(data);
+      const rawdata = fs.readFileSync('datas.json');  
+      const inv = JSON.parse(rawdata);  
+      Invs = inv.Invs;
+    });
+};
+var BackupCommand = function(message, args){
+    message.reply("Incoming Spam!\nBackup is now starting!");
+    var inv = {Invs:Invs};
     var data = JSON.stringify(inv);
     fs.writeFile('datas.json', data, (err) => {  
       if (err) throw err;
@@ -559,35 +593,6 @@ var BackupCommand = function(message, args){
         message.channel.send("```" + data.slice(i*1000, i*1000+1000) + "```");
       }
     });
-    //console.log(inv);
-    
-
-    /*var writeStream = fs.createWriteStream(filename, {autoClose: true});
-    writeStream.write(JSON.stringify(inv));
-    writeStream.end(function() {
-        console.log(' File saved!\n' + JSON.stringify(inv));
-    });*/
-      /*
-      { pickx: 2,
-
-    picky: 0,
-
-    id: '374929883698036736',
-
-    d: '1102411110141211111211111412212133353111114111321',
-
-    inv: { stone: 210, coal: 74, iron: 61, gold: 4, diamond: 27 },
-
-    pick: 2,
-
-    level: 8,
-
-    mp: { x: 7, y: 3 },
-
-    xp: 17,
-
-    name: 'KeplerTeddy' },
-      */
 };
 var CraftCommand = function(message, args){
 
@@ -597,12 +602,14 @@ var CraftCommand = function(message, args){
         yourarray = Invs.length-1;
     }
     var I = Invs[yourarray];
+  
+    updateInventory(I);
     I.name = message.author.username.toString();
     if(I.pick == 0){
         if(I.inv.stone >= 60){
             I.pick = 1;
             I.inv.stone -=60;
-            message.reply("You just got the stone pickaxe! " + pickaxes[I.pick]);
+            message.reply("You just got the stone pickaxe! Nice work! " + pickaxes[I.pick]);
         }
         else{
             message.reply("You need " + (60-I.inv.stone) + " more " + stone);
@@ -612,7 +619,7 @@ var CraftCommand = function(message, args){
         if(I.inv.iron >= 60){
             I.pick = 2;
             I.inv.iron -=60;
-            message.reply("You just got the iron pickaxe! " + pickaxes[I.pick]);
+            message.reply("You just got the iron pickaxe! Good going! " + pickaxes[I.pick]);
         }
         else{
             message.reply("You need " + (60-I.inv.iron) + " more " + iron);
@@ -641,98 +648,123 @@ var MultiMineCommand = function(message, args){
         console.log("User " + Invs[Invs.length-1].id + " Created!");
     }
     var I = Invs[yourarray];
-    I.name = message.author.username.toString();
-    if(cml == "" || args[0] == "recreate"){createMultiLand();}
-    
-    if((args[0] == "right" || args[0] == "r") && I.mp.x < 7){
-        I.mp.x ++;
-    }
-    if((args[0] == "left" || args[0] == "l") && I.mp.x > 0){
-        I.mp.x --;
-    }
-    if((args[0] == "down" || args[0] == "d") && I.mp.y < 7){
-        I.mp.y ++;
-    }
-    if((args[0] == "up" || args[0] == "u") && I.mp.y > 0){
-        I.mp.y --;
-    }
-    var m = "\n**Multiplayer Arena**";
-    for(var i = 0;i < 8;i ++){
-        m = m + "\n";
-        for(var j = 0;j < 8;j ++){
-            if(i === I.mp.y && j === I.mp.x){
-                m +=pickaxes[I.pick];
-                if(cml[i*8+j] == "6"){ 
-                    var randit = Math.floor(Math.random()*5);
-                    if(randit == 0){
-                        I.inv.stone +=100;
-                        message.reply("You got 100 stone!");
-                    }
-                    if(randit == 1){
-                        I.inv.coal +=50;
-                        message.reply("You got 50 coal!");
-                    }
-                    if(randit == 2){
-                        I.inv.iron +=25;
-                        message.reply("You got 25 iron!");
-                    }
-                    if(randit == 3){
-                        I.inv.gold +=15;
-                        message.reply("You got 15 gold!");
-                    }
-                    if(randit == 4){
-                        I.inv.diamond +=10;
-                        message.reply("You got 10 diamonds!");
-                    }
-                }
-                if(cml[i*8+j] == "5"){ I.inv.diamond ++; I.xp+=10;}
-                if(cml[i*8+j] == "4"){ I.inv.gold ++; I.xp+=5;}
-                if(cml[i*8+j] == "3"){ I.inv.iron ++;I.xp+=3;}
-                if(cml[i*8+j] == "2"){ I.inv.coal ++;I.xp+=1;}
-                if(cml[i*8+j] == "1"){ I.inv.stone ++;}
-                cml = replaceInString(cml, i*8+j, "0");
-            }
-            else if(cml[i*8+j] === "6"){
-                m += random;
-            }
-            else if(cml[i*8+j] === "5"){
-                m += diamond;
-            }
-            else if(cml[i*8+j] === "4"){
-                m += gold;
-            }
-            else if(cml[i*8+j] === "3"){
-                m += iron;
-            }
-            else if(cml[i*8+j] === "2"){
-                m += coal;
-            }
-            else if(cml[i*8+j] === "1"){
-                m += stone;
-            }
-            else if(cml[i*8+j] === "0"){
-                var doair = true;
-                for(var k = 0;k < Invs.length;k ++){
-                    if(yourarray !== k && doair){
-                        var K = Invs[k];
-                        if(K.mp.y === i && K.mp.x === j){
-                            m +=pickaxes[K.pick];
-                            doair = false;
-                        }
-                    }
-                }
-                if(doair){m += air;}
-            }
+  
+    updateInventory(I);
+  
+    if(Date.now() > I.lastmine+waittime){
+      I.lastmine = Date.now();
+      I.name = message.author.username.toString();
+      if(cml == "" || args[0] == "recreate"){
+        if(args[0] == "recreate" && lastmultiregen+regentime < Date.now()){
+          lastmultiregen = Date.now();
+          createMultiLand();
         }
+        else if(cml != ""){ 
+          message.channel.send("Please wait " + (((lastmultiregen+regentime)-Date.now())/1000).toFixed(1) + " Seconds!");
+        }
+        else if(cml == ""){
+          lastmultiregen = Date.now();
+          createMultiLand();
+        }
+      }
+
+      if((args[0] == "right" || args[0] == "r") && I.mp.x < 7){
+          I.mp.x ++;
+      }
+      if((args[0] == "left" || args[0] == "l") && I.mp.x > 0){
+          I.mp.x --;
+      }
+      if((args[0] == "down" || args[0] == "d") && I.mp.y < 7){
+          I.mp.y ++;
+      }
+      if((args[0] == "up" || args[0] == "u") && I.mp.y > 0){
+          I.mp.y --;
+      }
+      var m = "\n**Multiplayer Arena**";
+      for(var i = 0;i < 8;i ++){
+          m = m + "\n";
+          for(var j = 0;j < 8;j ++){
+              if(i === I.mp.y && j === I.mp.x){
+                  m +=pickaxes[I.pick];
+                  if(cml[i*8+j] == "6"){ 
+                      var randit = Math.floor(Math.random()*5);
+                      if(randit == 0){
+                          I.inv.stone +=100;
+                          message.reply("You got 100 stone!");
+                      }
+                      if(randit == 1){
+                          I.inv.coal +=50;
+                          message.reply("You got 50 coal!");
+                      }
+                      if(randit == 2){
+                          I.inv.iron +=25;
+                          message.reply("You got 25 iron!");
+                      }
+                      if(randit == 3){
+                          I.inv.gold +=15;
+                          message.reply("You got 15 gold!");
+                      }
+                      if(randit == 4){
+                          I.inv.diamond +=10;
+                          message.reply("You got 10 diamonds!");
+                      }
+                  }
+                  if(cml[i*8+j] == "5"){ I.inv.diamond ++; I.xp+=10;}
+                  if(cml[i*8+j] == "4"){ I.inv.gold ++; I.xp+=5;}
+                  if(cml[i*8+j] == "3"){ I.inv.iron ++;I.xp+=3;}
+                  if(cml[i*8+j] == "2"){ I.inv.coal ++;I.xp+=1;}
+                  if(cml[i*8+j] == "1"){ I.inv.stone ++;}
+                  cml = replaceInString(cml, i*8+j, "0");
+              }
+              else if(cml[i*8+j] === "6"){
+                  m += random;
+              }
+              else if(cml[i*8+j] === "5"){
+                  m += diamond;
+              }
+              else if(cml[i*8+j] === "4"){
+                  m += gold;
+              }
+              else if(cml[i*8+j] === "3"){
+                  m += iron;
+              }
+              else if(cml[i*8+j] === "2"){
+                  m += coal;
+              }
+              else if(cml[i*8+j] === "1"){
+                  m += stone;
+              }
+              else if(cml[i*8+j] === "0"){
+                  var doair = true;
+                  for(var k = 0;k < Invs.length;k ++){
+                      if(yourarray !== k && doair){
+                          var K = Invs[k];
+                          if(K.mp.y === i && K.mp.x === j){
+                              m +=pickaxes[K.pick];
+                              doair = false;
+                          }
+                      }
+                  }
+                  if(doair){m += air;}
+              }
+          }
+      }
+      message.reply(m);
+      if(args[0] === ""){
+        message.channel.send("**Don't forget to add a direction at the end in the direction you want to mine!**");
+      }
+      if(I.xp >= I.level*10){
+          I.xp -=I.level*10;
+          I.level ++;
+          message.reply(xp + "You just got to level " + I.level + "! " + xp);
+      }
+      addPickaxeRoles(message, I);
+      //console.log(m.length);
     }
-    message.reply(m);
-    if(I.xp >= I.level*10){
-        I.xp -=I.level*10;
-        I.level ++;
-        message.reply(xp + "You just got to level " + I.level + "! " + xp);
-    }
-    addPickaxeRoles(message, I);
-    //console.log(m.length);
+  else{
+    message.channel.send("Please wait " + (((I.lastmine+waittime)-Date.now())/1000).toFixed(2) + " Seconds!");
+  }
+    
 };
 var TopListCommand = function(message, args){
     
@@ -742,6 +774,8 @@ var TopListCommand = function(message, args){
         yourarray = Invs.length-1;
     }
     var I = Invs[yourarray];
+  
+    updateInventory(I);
     I.name = message.author.username.toString();
     TopInvs = [];
     for(var i = 0;i < Invs.length;i ++){
@@ -876,6 +910,11 @@ bot.on('message', message => {
 bot.on('ready', function(){
   setInterval(() => {
         dbl.postStats(bot.guilds.size);
+        if(!maintenance){
+          bot.user.setActivity(bot.guilds.size + " Servers | kb!help", { type: 'WATCHING' })
+    .then(presence => console.log(`Activity set!`))
+    .catch(console.error);
+        BackupQuick();}
     }, 1800000);
     if(maintenance){
         bot.user.setActivity("Maintenance!!!", { type: 'LISTENING' })
