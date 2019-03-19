@@ -19,11 +19,11 @@ const fs = require('fs');
 const bot = new Commando.Client({commandPrefix: 'kb!'});
 const TOKEN = process.env.TOKEN;
 const DBL = require('dblapi.js');
-const dbl = new DBL(process.env.DBLTOKEN, { webhookServer: server, webhookAuth: 'authorkeplerbot' }, bot);
+const dbl = new DBL(process.env.DBLTOKEN, { webhookServer: server, webhookAuth: 'auth goes here' }, bot);
 
 /** BIG VARIABLES */
 var maintenance = false;
-var version = "1.0";
+var version = "1.2";
 var waittime = 3000;
 var regentime = 180000;
 var lastmultiregen = 0;
@@ -83,7 +83,7 @@ var Helps = [
         d: "Backups the user data",
     },
     {
-        name: "kb!craft",
+        name: "kb!craft <pickaxe name or id>",
         values: "none",
         d: "Crafts a pickaxe, requires 60 of a material.",
     },
@@ -96,6 +96,16 @@ var Helps = [
         name: "kb!top or kb!toplist",
         values: "none",
         d: "Top 10 users sorted by xp",
+    },
+    {
+        name: "kb!pickaxe <pickaxe id>",
+        values: "none",
+        d: "Switches your pickaxe to the one selected!",
+    },
+    {
+        name: "kb!crate [common:uncommon:rare:legendary]",
+        values: "none",
+        d: "Look at your crates or open a crate!",
     },
     {
         name: "kb!flip",
@@ -261,6 +271,46 @@ var createLand = function(I){
                     I.d += "1";
                 }
             }
+            else if(pick == 4){
+                if(mathrandom >= 9.7){
+                    I.d += "6";
+                }
+                else if(mathrandom >= 9.3){
+                    I.d += "5";
+                }
+                else if(mathrandom >= 8.7){
+                    I.d += "4";
+                }
+                else if(mathrandom >= 7.7){
+                    I.d += "3";
+                }
+                else if(mathrandom >= 6.3){
+                    I.d += "2";
+                }
+                else if(mathrandom >= -1){
+                    I.d += "1";
+                }
+            }
+            else if(pick == 5){
+                if(mathrandom >= 9.6){
+                    I.d += "6";
+                }
+                else if(mathrandom >= 9.2){
+                    I.d += "5";
+                }
+                else if(mathrandom >= 8.6){
+                    I.d += "4";
+                }
+                else if(mathrandom >= 7.8){
+                    I.d += "3";
+                }
+                else if(mathrandom >= 6.5){
+                    I.d += "2";
+                }
+                else if(mathrandom >= -1){
+                    I.d += "1";
+                }
+            }
         }
     }
     console.log("Created world for " + I.id);
@@ -302,6 +352,13 @@ var findYourPlace = function(yourid){
     }
     return -1;
 };
+var levelUp = function(I, message){
+  while(I.xp >= I.level*10){
+          I.xp -=I.level*10;
+          I.level ++;
+  }
+  message.channel.send(xp + "You got to level " + I.level + "! " + xp);
+};
 var tokenToUser = async function(id){
     await bot.fetchUser(id.toString())
     .then(user => {
@@ -331,24 +388,27 @@ var makeNewInventory = function(message, name, id){
         mp: {x:4,y:4},
         xp: 0,
         name: Name,
-        lastmine: Date.now(),
+        lastmine: 0,
+        lastregen: 0,
+        picks: [true, false, false, false, false, false],
+        crates: [0, 0, 0, 0],
     });
 };
 var addPickaxeRoles = function(message, I){
     if(message.channel.type !== 'dm' && (bot.guilds.get(message.guild.id).id).toString() === "550036987772403714"){
-      if(I.pick >= 0){
+      if(I.pick == 0){
           var role = message.guild.roles.find(role => role.name === "Wooden Pickaxe");
           message.member.addRole(role);
       }
-      if(I.pick >= 1){
+      if(I.pick == 1){
           var role = message.guild.roles.find(role => role.name === "Stone Pickaxe");
           message.member.addRole(role);
       }
-      if(I.pick >= 2){
+      if(I.pick == 2){
           var role = message.guild.roles.find(role => role.name === "Iron Pickaxe");
           message.member.addRole(role);
       }
-      if(I.pick >= 3){
+      if(I.pick == 3){
           var role = message.guild.roles.find(role => role.name === "Diamond Pickaxe");
           message.member.addRole(role);
       }
@@ -357,6 +417,22 @@ var addPickaxeRoles = function(message, I){
 var updateInventory = function(I){
   if(I.lastregen === undefined){
     I.lastregen = 0;
+  }
+  if(I.picks === undefined){
+    var pickss = [];
+    for(var i = 0;i < pickaxes.length;i ++){
+      if(i > I.pick){
+        pickss.push(false);
+      }
+      else{
+        pickss.push(true);
+      }
+    }
+    I.picks = pickss;
+    console.log(I.id + " updated to 1.2!: " + pickss);
+  }
+  if(I.crates === undefined){
+    I.crates = [1, 0, 0, 0]; //common, uncommon, rare, legendary
   }
 };
 var stone = "<:stone:550125781842395136>";
@@ -367,12 +443,13 @@ var redstone = "<:redstone:550738154911432704>";
 var lapis = "<:lapis:550738153896542212>";
 var diamond = "<:diamond:550738152797765652>";
 var random = "<:random:550738153414328405>";
-var pickaxes = ["<:wp:550733904051437570>", "<:sp:550733903896379445>", "<:ip:550049621477425176>", "<:dp:550733904009625612>"];
+var pickaxes = ["<:wp:550733904051437570>", "<:sp:550733903896379445>", "<:ip:550049621477425176>", "<:dp:550733904009625612>", "<:vp:557200040633040947>", "<:dop:557200041517776896>"];
 var air = "<:air:550335949909786625>";
 var xps = ["<:xp_0:550744679550025728>", "<:xp_1:550744679327596545>", "<:xp_2:550744679495237643>", "<:xp_3:550744679680049167>", 
         "<:xp_4:550744679776256050>", "<:xp_5:550744679830781967>", 
         "<:xp_6:550744679910473753>", "<:xp_7:550744679562608642>", "<:xp_8:550744679835107340>"];
 var xp = "<:xp:550773197398736928>";
+var crates = ["<:crate1:557290667135467520>", "<:crate2:557290668003688449>", "<:crate3:557290667986911250>", "<:crate4:557290669647855618>", "<:crate0:557290666883809311>"];
 //Functions
 var count = 0;
 var MineCommand = function(message, args){
@@ -466,11 +543,7 @@ var MineCommand = function(message, args){
       if(args[0] === ""){
         message.channel.send("**Don't forget to add a direction at the end in the direction you want to mine!**");
       }
-      if(I.xp >= I.level*10){
-          I.xp -=I.level*10;
-          I.level ++;
-          message.reply(xp + "You just got to level " + I.level + "! " + xp);
-      }
+      levelUp(I, message);
       var tips = [
           "If you get 60 stone, you can craft a stone pickaxe using \'kb!craft\'! Same goes for other materials like iron and diamond!",
           "Are you out of land? Use the \'kb!regenland\' command when you require new land!",
@@ -542,6 +615,16 @@ var InvCommand = function(message, args){
         message.reply("\n **" + I.name + "'s Inventory** " + pickaxes[I.pick] + "\nYou have mined:\n" 
         + stone + " " + I.inv.stone + "\n" + coal + " " + I.inv.coal + "\n" + iron + " " + I.inv.iron + "\n" + gold + " " 
         + I.inv.gold + "\n" + diamond + " " + I.inv.diamond + "\n\nLevel: " + I.level + "\n" + xp + XPP);
+        var pickss = "";
+        for(var i = 0;i < I.picks.length;i ++){
+          if(I.picks[i]){
+            pickss +=pickaxes[i];
+          }
+          else{
+            pickss +=air;
+          }
+        }
+        message.channel.send("**YOUR PICKAXES: **" + pickss + "\n**Do kb!pickaxe [pickaxe] to switch your pickaxe!**");
         addPickaxeRoles(message, I);
 };
 var RegenLandCommand = function(message, args){
@@ -569,7 +652,7 @@ var BackupQuick = function(){
     var data = JSON.stringify(inv);
     fs.writeFile('datas.json', data, (err) => {  
       if (err) throw err;
-      console.log('Data written to file!');
+      console.log('Data written to file! ' + data.length + " Characters long!");
       console.log(data);
       const rawdata = fs.readFileSync('datas.json');  
       const inv = JSON.parse(rawdata);  
@@ -605,38 +688,47 @@ var CraftCommand = function(message, args){
   
     updateInventory(I);
     I.name = message.author.username.toString();
-    if(I.pick == 0){
-        if(I.inv.stone >= 60){
-            I.pick = 1;
-            I.inv.stone -=60;
-            message.reply("You just got the stone pickaxe! Nice work! " + pickaxes[I.pick]);
-        }
-        else{
-            message.reply("You need " + (60-I.inv.stone) + " more " + stone);
-        }
+    //stone
+    if(I.inv.stone >= 60 && (args[0] === 1 || args[0] === "stone") && I.picks[1] === false){
+        I.pick = 1;
+        I.inv.stone -=60;
+        I.picks[1] = true;
+        message.reply("You just got the stone pickaxe! Nice work! " + pickaxes[I.pick]);
     }
-    else if(I.pick == 1){
-        if(I.inv.iron >= 60){
-            I.pick = 2;
-            I.inv.iron -=60;
-            message.reply("You just got the iron pickaxe! Good going! " + pickaxes[I.pick]);
-        }
-        else{
-            message.reply("You need " + (60-I.inv.iron) + " more " + iron);
-        }
+    else if((args[0] === 1 || args[0] === "stone") && I.picks[1] === false){
+        message.reply("You need " + (60-I.inv.stone) + " more " + stone);
     }
-    else if(I.pick == 2){
-        if(I.inv.diamond >= 60){
-            I.pick = 3;
-            I.inv.diamond -=60;
-            message.reply("You just got the DIAMOND pickaxe! What a god! " + pickaxes[I.pick]);
-        }
-        else{
-            message.reply("You need " + (60-I.inv.diamond) + " more " + diamond);
-        }
+    else if(args[0] === 1 || args[0] === "stone"){
+      message.reply("You own this pickaxe!");
     }
-    else{
-        message.reply("You own the maximum pickaxe!");
+    //iron
+    if(I.inv.iron >= 60 && (args[0] === 2 || args[0] === "iron") && I.picks[2] === false){
+        I.pick = 2;
+        I.inv.iron -=60;
+        I.picks[2] = true;
+        message.reply("You just got the iron pickaxe! Good going! " + pickaxes[I.pick]);
+    }
+    else if((args[0] === 2 || args[0] === "iron") && I.picks[2] === false){
+        message.reply("You need " + (60-I.inv.iron) + " more " + iron);
+    }
+    else if(args[0] === 2 || args[0] === "iron"){
+      message.reply("You own this pickaxe!");
+    }
+    //diamond
+    if(I.inv.diamond >= 60 && (args[0] === 3 || args[0] === "diamond") && I.picks[3] === false){
+        I.pick = 3;
+        I.picks[3] = true;
+        I.inv.diamond -=60;
+        message.reply("You just got the DIAMOND pickaxe! What a god! " + pickaxes[I.pick]);
+    }
+    else if((args[0] === 3 || args[0] === "diamond") && I.picks[3] === false){
+        message.reply("You need " + (60-I.inv.diamond) + " more " + diamond);
+    }
+    else if(args[0] === 3 || args[0] === "diamond"){
+      message.reply("You own this pickaxe!");
+    }
+    if(args[0] === ""){
+        message.channel.send("Please add in what pickaxe you want to craft! iron, stone, diamond, etc."); 
     }
     addPickaxeRoles(message, I);
 };
@@ -753,11 +845,7 @@ var MultiMineCommand = function(message, args){
       if(args[0] === ""){
         message.channel.send("**Don't forget to add a direction at the end in the direction you want to mine!**");
       }
-      if(I.xp >= I.level*10){
-          I.xp -=I.level*10;
-          I.level ++;
-          message.reply(xp + "You just got to level " + I.level + "! " + xp);
-      }
+      levelUp(I, message);
       addPickaxeRoles(message, I);
       //console.log(m.length);
     }
@@ -792,9 +880,236 @@ var TopListCommand = function(message, args){
         //console.log(tokenToUser(TopInvs[i].id));
         ms +=" - Level " + TopInvs[i].level + "\n";
     }
-    if(1+findYourPlace(message.author.id) > 10){ ms +="...\n" + (1+findYourPlace()) + ". " + message.author.name + " - Level " + TopInvs[i].level;}
+    if(1+findYourPlace(message.author.id) > 10){ ms +="...\n" + (1+findYourPlace(message.author.id)) + ". " + TopInvs[findYourPlace(message.author.id)].name + " - Level " + TopInvs[findYourPlace(message.author.id)].level;}
     message.reply(ms);
     addPickaxeRoles(message, I);
+};
+var PickaxeCommand = function(message, args){
+    var yourarray = findYourId(message.author.id);
+    if(yourarray == -1){
+        makeNewInventory(message);
+        yourarray = Invs.length-1;
+    }
+    var I = Invs[yourarray];
+  
+    updateInventory(I);
+    I.name = message.author.username.toString();
+    var pickk = args[0];
+    if(pickk === "wood"){pickk = 0;}
+    if(pickk === "stone"){pickk = 1;}
+    if(pickk === "iron"){pickk = 2;}
+    if(pickk === "diamond"){pickk = 3;}
+    if(pickk === "voting"){pickk = 4;}
+    if(pickk === "donator"){pickk = 5;}
+    pickk = Math.floor(pickk);
+    if(pickk < 0 || pickk > I.picks.length-1){
+      message.channel.send("That pickaxe doesn't exist!");
+      return;
+    }
+    if(I.picks[pickk] === true){
+      I.pick = pickk;
+      message.channel.send("Pickaxe switched to " + pickaxes[pickk]);
+    }
+    else{
+      message.channel.send("You don't own that pick!");
+    }
+};
+var CrateCommand = function(message, args){
+    var yourarray = findYourId(message.author.id);
+    if(yourarray == -1){
+        makeNewInventory(message);
+        yourarray = Invs.length-1;
+    }
+    var I = Invs[yourarray];
+  
+    updateInventory(I);
+    I.name = message.author.username.toString();
+    if(args[0] === undefined || args[0] === ""){
+      var CR = "";
+      for(var i = 0;i < 4;i ++){
+        CR +="\n" + crates[i] + " **" + I.crates[i] + "**"; 
+      }
+      message.channel.send("**YOUR CRATES: **" + crates[4] + CR + "\n**Do `kb!crate [common:uncommon:rare:legendary]` to open a crate of that type**");
+        
+      return; 
+    }
+  if(args[0] === "common" && I.crates[0] > 0){
+    var chance = Math.floor(Math.random()*5); //0, 1, 3, 5, 10
+    I.crates[0] --;
+    if(chance === 0){
+      message.reply("You just won 50 XP!");
+      I.xp +=50;
+    }
+    if(chance === 1){
+      message.reply("You just won 20 Gold");
+      I.inv.gold +=20;
+      I.xp +=5*20;
+    }
+    if(chance === 2){
+      message.reply("You just won 20 Iron");
+      I.inv.iron +=20;
+      I.xp +=3*20;
+    }
+    if(chance === 3){
+      message.reply("You just won 100 Stone");
+      I.inv.stone +=100;
+    }
+    if(chance === 4){
+      message.reply("You just won 30 Coal");
+      I.inv.coal +=30;
+      I.xp +=30;
+    }
+  }
+  if(args[0] === "uncommon" && I.crates[1] > 0){
+    var chance = Math.floor(Math.random()*5); //0, 1, 3, 5, 10
+    I.crates[1] --;
+    if(chance === 0){
+      message.reply("You just won 100 XP!");
+      I.xp +=100;
+    }
+    if(chance === 1){
+      message.reply("You just won 25 Gold");
+      I.inv.gold +=25;
+      I.xp +=5*25;
+    }
+    if(chance === 2){
+      message.reply("You just won 30 Iron");
+      I.inv.iron +=30;
+      I.xp +=3*30;
+    }
+    if(chance === 3){
+      message.reply("You just levelled up!");
+      I.level ++;
+      I.xp = 0;
+    }
+    if(chance === 4){
+      message.reply("You just won 10 Diamonds!");
+      I.inv.diamond +=10;
+      I.xp +=10*10;
+    }
+  }
+  if(args[0] === "rare" && I.crates[2] > 0){
+    var chance = Math.floor(Math.random()*5); //0, 1, 3, 5, 10
+    I.crates[2] --;
+    if(chance === 0){
+      message.reply("You just won 250 XP!");
+      I.xp +=250;
+    }
+    if(chance === 1){
+      message.reply("You just won 50 Gold!");
+      I.inv.gold +=50;
+      I.xp +=5*50;
+    }
+    if(chance === 2){
+      message.reply("You just won 15 Diamonds!");
+      I.inv.diamond +=15;
+      I.xp +=15*10;
+    }
+    if(chance === 3){
+      message.reply("You just won 25 Diamonds!");
+      I.inv.diamond +=25;
+      I.xp +=25*10;
+    }
+    if(chance === 4){
+      message.reply("You just earned a bonus crate!");
+      var cratechance = Math.floor(Math.random()*10)+1;
+      if(cratechance === 10){ I.crates[3] ++; message.channel.send("You got a Legendary Crate! " + crates[3]);}
+      else if(cratechance >= 8){ I.crates[2] ++; message.channel.send("You got a Rare Crate! " + crates[2]);}
+      else if(cratechance >= 5){ I.crates[1] ++; message.channel.send("You got a Uncommon Crate! " + crates[1]);}
+      else{ I.crates[0] ++; message.channel.send("You got a Common Crate! " + crates[0]);}
+    }
+  }
+  if(args[0] === "legendary" && I.crates[3] > 0){
+    var chance = Math.floor(Math.random()*4); //0, 1, 3, 5, 10
+    I.crates[3] --;
+    if(chance === 0){
+      message.reply("You just won 500 XP!");
+      I.xp +=500;
+    }
+    if(chance === 1){
+      message.reply("You just won the VOTING PICKAXE!");
+      I.picks[4] = true;
+      I.pick = 4;
+    }
+    if(chance === 2){
+      message.reply("You just won 50 Diamonds!");
+      I.inv.diamond +=50;
+      I.xp +=50*10;
+    }
+    if(chance === 3){
+      message.reply("You just earned a bonus crate!");
+      var cratechance = Math.floor(Math.random()*10)+1;
+      if(cratechance === 10){ I.crates[3] ++; message.channel.send("You got a Legendary Crate! " + crates[3]);}
+      else if(cratechance >= 8){ I.crates[2] ++; message.channel.send("You got a Rare Crate! " + crates[2]);}
+      else if(cratechance >= 5){ I.crates[1] ++; message.channel.send("You got a Uncommon Crate! " + crates[1]);}
+      else{ I.crates[0] ++; message.channel.send("You got a Common Crate! " + crates[0]);}
+    }
+  }
+};
+var GiveCommand = function(message, args){
+    var yourarray = findYourId(message.author.id);
+    if(yourarray == -1){
+        makeNewInventory(message);
+        yourarray = Invs.length-1;
+    }
+    var I = Invs[yourarray];
+  
+    updateInventory(I);
+    I.name = message.author.username.toString();
+  if(I.id === "374929883698036736"){
+    if(args[0] === "" || args[0] === undefined){
+      message.channel.send("Do kb!give <id> <pick:ore:xp> <item:number>");
+      return;
+    }
+    else{
+      var selectedid = findYourId(args[0].toString());
+      if(selectedid === -1){
+        message.channel.send("This person isn't a miner!");
+        return;
+      }
+      var SI = Invs[selectedid];
+    updateInventory(SI);
+      if(args[1] === "pick"){
+        SI.pick = Math.floor(args[2]);
+        SI.picks[Math.floor(args[2])] = true;
+        message.channel.send("Gave " + SI.name + " the " + pickaxes[SI.pick] + " Pickaxe!");
+      }
+      else{
+        if(args[1] === "stone"){
+          SI.inv.stone +=Math.floor(args[2]);
+          message.channel.send("Gave " + SI.name + " " + args[2] + " Stone!");
+        }
+        if(args[1] === "coal"){
+          SI.inv.coal +=Math.floor(args[2]);
+          message.channel.send("Gave " + SI.name + " " + args[2] + " Coal!");
+        }
+        if(args[1] === "iron"){
+          SI.inv.iron +=Math.floor(args[2]);
+          message.channel.send("Gave " + SI.name + " " + args[2] + " Iron!");
+        }
+        if(args[1] === "gold"){
+          SI.inv.gold +=Math.floor(args[2]);
+          message.channel.send("Gave " + SI.name + " " + args[2] + " Gold!");
+        }
+        if(args[1] === "diamond"){
+          SI.inv.diamond +=Math.floor(args[2]);
+          message.channel.send("Gave " + SI.name + " " + args[2] + " Diamonds!");
+        }
+        if(args[1] === "xp"){
+          SI.xp +=Math.floor(args[2]);
+          message.channel.send("Gave " + SI.name + " " + args[2] + " XP!");
+        }
+        if(args[1] === "levels"){
+          SI.level +=Math.floor(args[2]);
+          message.channel.send("Gave " + SI.name + " " + args[2] + " Levels!");
+        }
+      }
+    }
+  }
+  else{
+    message.channel.send("You can't use this command unless you are KeplerTeddy!");
+    return;
+  }
 };
 /** MESSAGE FUNCTION */
 dbl.webhook.on('ready', hook => {
@@ -808,14 +1123,23 @@ dbl.webhook.on('vote', vote => {
     for(var i = 0;i < Invs.length;i ++){
       if(Invs[i].id === VotedUser.toString()){
         theinv = i;
-        Invs[i].xp +=100;
+        var I = Invs[i];
+        var cratechance = Math.floor(Math.random()*10)+1;
+        if(cratechance === 10){ I.crates[3] ++; bot.users.get(VotedUser).send("You got a Legendary Crate! " + crates[3]);}
+        else if(cratechance >= 8){ I.crates[2] ++; bot.users.get(VotedUser).send("You got a Rare Crate! " + crates[2]);}
+        else if(cratechance >= 5){ I.crates[1] ++; bot.users.get(VotedUser).send("You got a Uncommon Crate! " + crates[1]);}
+        else{ I.crates[0] ++; bot.users.get(VotedUser).send("You got a Common Crate! " + crates[0]);}
       }
     }
     if(theinv === -1){
       makeNewInventory("unknown", VotedUser, VotedUser.toString());
-      Invs[Invs.length-1].xp +=100;
+        var I = Invs[Invs.length-1];
+        var cratechance = Math.floor(Math.random()*10)+1;
+        if(cratechance === 10){ I.crates[3] ++; bot.users.get(VotedUser).send("You got a Legendary Crate! " + crates[3]);}
+        else if(cratechance >= 8){ I.crates[2] ++; bot.users.get(VotedUser).send("You got a Rare Crate! " + crates[2]);}
+        else if(cratechance >= 5){ I.crates[1] ++; bot.users.get(VotedUser).send("You got a Uncommon Crate! " + crates[1]);}
+        else{ I.crates[0] ++; bot.users.get(VotedUser).send("You got a Common Crate! " + crates[0]);}
     }
-    bot.users.get(VotedUser).send("Thanks for voting! You just earned 100 XP! " + xp);
   }
   catch(error){
     console.log('Uh oh! ' + error);
@@ -893,6 +1217,15 @@ bot.on('message', message => {
             else if(nameCmd === "toplist" || nameCmd === "top"){
                 TopListCommand(message, args);
             }
+            else if(nameCmd === "pickaxe"){
+                PickaxeCommand(message, args);
+            }
+            else if(nameCmd === "crate"){
+                CrateCommand(message, args);
+            }
+            else if(nameCmd === "give"){
+                GiveCommand(message, args);
+            }
             else{
                 //message.reply("I have not heard of this command! Do kb!help to see the list of commands!");
             }
@@ -918,7 +1251,7 @@ bot.on('ready', function(){
     }, 1800000);
     if(maintenance){
         bot.user.setActivity("Maintenance!!!", { type: 'LISTENING' })
-  .then(presence => console.log(`Activity set to ${presence.activity.name}`))
+  .then(presence => console.log(`Activity set!`))
   .catch(console.error);
     }
     else{
