@@ -19,11 +19,11 @@ const fs = require('fs');
 const bot = new Commando.Client({commandPrefix: 'kb!'});
 const TOKEN = process.env.TOKEN;
 const DBL = require('dblapi.js');
-const dbl = new DBL(process.env.DBLTOKEN, { webhookServer: server, webhookAuth: 'auth goes here' }, bot);
+const dbl = new DBL(process.env.DBLTOKEN, { webhookServer: server, webhookAuth: 'authorkeplerbot' }, bot);
 
 /** BIG VARIABLES */
 var maintenance = false;
-var version = "1.2";
+var version = "1.2.1";
 var waittime = 3000;
 var regentime = 180000;
 var lastmultiregen = 0;
@@ -133,6 +133,16 @@ var Helps = [
         d: "Invite the Kepler Bot to your server!",
     },
     {
+        name: "kb!server",
+        values: "none",
+        d: "Invite link for The Kepler Bot Official Server!",
+    },
+    {
+        name: "kb!stats",
+        values: "none",
+        d: "Stats on The Kepler Bot!",
+    },
+    {
         name: "kb!vote",
         values: "none",
         d: "Vote for the Kepler Bot and get 100XP!",
@@ -171,6 +181,15 @@ var InviteCommand = function(message){
 };
 var VoteCommand = function(message){
   message.reply("\n**Vote for The Kepler Bot:**\nhttps://bit.ly/2JbLSUf");
+};
+var ServerCommand = function(message){
+  let exampleEmbed = new Commando.RichEmbed()
+        .setTitle('KeplerBot\'s official server!')
+        .setColor("22ff88")
+        .setURL('https://discord.gg/SyySZ4E')
+        .setTimestamp();
+
+    message.channel.send(exampleEmbed);
 };
 
 /** KEPLER MINER COMMANDS */
@@ -543,7 +562,7 @@ var MineCommand = function(message, args){
       if(args[0] === ""){
         message.channel.send("**Don't forget to add a direction at the end in the direction you want to mine!**");
       }
-      levelUp(I, message);
+      if(I.xp >= I.level*10){levelUp(I, message);}
       var tips = [
           "If you get 60 stone, you can craft a stone pickaxe using \'kb!craft\'! Same goes for other materials like iron and diamond!",
           "Are you out of land? Use the \'kb!regenland\' command when you require new land!",
@@ -556,6 +575,7 @@ var MineCommand = function(message, args){
           "Don't forget to check how many more materials you need to craft the next pickaxe!",
           "New features are being added every week! Be sure to try them out!",
           "Donating will give you many features! Donate from my website or in The Kepler Bot Official Server, type `donate`!",
+          "Join The Kepler Bot Official Server by doing `kb!server`!",
       ];
       if(Math.random()*10 > 7.8){
           message.channel.send("**TIP: **" + tips[Math.floor(Math.random()*tips.length)]);
@@ -663,6 +683,8 @@ var BackupCommand = function(message, args){
     message.reply("Incoming Spam!\nBackup is now starting!");
     var inv = {Invs:Invs};
     var data = JSON.stringify(inv);
+    var Namee = "data" + Date.now() + ".json";
+    Namee = Namee.toString();
     fs.writeFile('datas.json', data, (err) => {  
       if (err) throw err;
       console.log('Data written to file!');
@@ -672,9 +694,11 @@ var BackupCommand = function(message, args){
       //console.log(inv.Invs);  
       message.reply("Data has been backed up successfully! There are " + inv.Invs.length + " user datas stored!");
       Invs = inv.Invs;
-      for(var i = 0;i < Math.floor(data.length/1000)+1;i ++){
+      var myAttachment = new Commando.Attachment("./datas.json", Namee);
+      message.channel.send("Here is the .json file!", myAttachment);
+      /*for(var i = 0;i < Math.floor(data.length/1000)+1;i ++){
         message.channel.send("```" + data.slice(i*1000, i*1000+1000) + "```");
-      }
+      }*/
     });
 };
 var CraftCommand = function(message, args){
@@ -845,7 +869,7 @@ var MultiMineCommand = function(message, args){
       if(args[0] === ""){
         message.channel.send("**Don't forget to add a direction at the end in the direction you want to mine!**");
       }
-      levelUp(I, message);
+      if(I.xp >= I.level*10){levelUp(I, message);}
       addPickaxeRoles(message, I);
       //console.log(m.length);
     }
@@ -874,7 +898,7 @@ var TopListCommand = function(message, args){
     var maxx = TopInvs.length;
     if(maxx > 10){ maxx = 10;}
     for(var i = 0;i < maxx;i ++){
-        ms +=(i+1) + ". ";
+        ms +=(i+1) + ". " + pickaxes[TopInvs[i].pick];
         ms +=TopInvs[i].name;
         //ms +=tokenToUser(TopInvs[i].id);
         //console.log(tokenToUser(TopInvs[i].id));
@@ -1111,6 +1135,20 @@ var GiveCommand = function(message, args){
     return;
   }
 };
+var StatsCommand = function(message){
+    var activethisday = 0;
+    var activethisweek = 0;
+    for(var i = 0; i < Invs.length;i ++){
+      var d = Date.now();
+      if(Invs[i].lastmine+86400000 > d){
+        activethisday ++;
+      }
+      if(Invs[i].lastmine+604800000 > d){
+        activethisweek ++;
+      }
+    }
+    message.reply("\n**Stats!:**\nPlayers: **" + Invs.length + "**\nServers: **" + bot.guilds.size + "**\nActive in the past 24 hours: **" + activethisday + "**\nActive in the past 7 Days: **" + activethisweek + "**");
+};
 /** MESSAGE FUNCTION */
 dbl.webhook.on('ready', hook => {
   console.log(`Webhook running at http://${hook.hostname}:${hook.port}${hook.path}`);
@@ -1180,6 +1218,9 @@ bot.on('message', message => {
             else if(nameCmd === "about" || nameCmd === "ab"){
                 AboutCommand(message);
             }
+            else if(nameCmd === "server"){
+                ServerCommand(message);
+            }
             else if(nameCmd === "vote" || nameCmd === "v"){
                 VoteCommand(message);
             }
@@ -1188,6 +1229,9 @@ bot.on('message', message => {
             }
             else if(nameCmd === "invite"){
                 InviteCommand(message);
+            }
+            else if(nameCmd === "stats"){
+                StatsCommand(message);
             }
             else if(nameCmd === "mine" || nameCmd === "m"){
                 MineCommand(message, args);
@@ -1248,7 +1292,7 @@ bot.on('ready', function(){
     .then(presence => console.log(`Activity set!`))
     .catch(console.error);
         BackupQuick();}
-    }, 1800000);
+    }, 600000);
     if(maintenance){
         bot.user.setActivity("Maintenance!!!", { type: 'LISTENING' })
   .then(presence => console.log(`Activity set!`))
