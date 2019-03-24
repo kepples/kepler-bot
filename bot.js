@@ -19,11 +19,11 @@ const fs = require('fs');
 const bot = new Commando.Client({commandPrefix: 'kb!'});
 const TOKEN = process.env.TOKEN;
 const DBL = require('dblapi.js');
-const dbl = new DBL(process.env.DBLTOKEN, { webhookServer: server, webhookAuth: 'auth here' }, bot);
+const dbl = new DBL(process.env.DBLTOKEN, { webhookServer: server, webhookAuth: 'webhook auth here' }, bot);
 
 /** BIG VARIABLES */
 var maintenance = false;
-var version = "1.2.1";
+var version = "1.3";
 var waittime = 3000;
 var regentime = 180000;
 var lastmultiregen = 0;
@@ -39,24 +39,36 @@ var dice = [
     "<:dice6:550358709545730069>",
 ];
 var coins = ["<:Heads:553050199350706176>", "<:Tails:553050202085523468>"];
+var Message = function(t, m, message, c){
+  c = c || "22ff88";
+  let embed = new Commando.RichEmbed()
+        .setAuthor(bot.user.username, bot.user.avatarURL)
+        .addField(t, m)
+        .setColor(c);
+        //.setTimestamp();
+
+    message.channel.send(embed);
+};
 //Functions
 var CoinFlipCommand = function(message){
     var chance = Math.floor(Math.random()*2);
     if(chance == 0){
-        message.reply("Your coin landed on Heads! " + coins[0]);
+      Message("Coin", "It landed on Heads! " + coins[0], message, "888888");
     }
     else if(chance == 1){
-        message.reply("Your coin landed on Tails! " + coins[1]);//, {files:[__dirname+"/data/TailsCoin.png"]}
+      Message("Coin", "It landed on Tails! " + coins[1], message, "888888");
     }
 };
 var DiceRollCommand = function(message){
     var chance = 1 + Math.floor(Math.random()*6);
-    message.reply("The dice rolled a " + chance + "!" + "  " + dice[chance-1]);
+    Message("Dice", "The dice rolled a " + chance + "!" + "  " + dice[chance-1], message, "bbbbbb");
+    //message.channel.send("The dice rolled a " + chance + "!" + "  " + dice[chance-1]);
 };
 var PickFromCommand = function(message, args){
     var num = Math.floor(args[0]);
     var chance = Math.floor(Math.random()*num);
-    message.reply("The number I have chosen is " + chance);
+    //message.reply("The number I have chosen is " + chance);
+    Message("Pickfrom", "The number I have chosen is " + chance, message, "bbbbbb");
 };
 
 /** OTHER COMMANDS */
@@ -156,34 +168,43 @@ var Helps = [
 
 //Functions
 var AboutCommand = function(message){
-    message.reply("\nThe Kepler Bot:\nCreated by: KeplerTeddy#1138\nVersion: " + version + "\nProgramming Language: Node.js + Discord.js");
+    Message("About The Kepler Bot: ", "Created by: KeplerTeddy#1138\nHelpers: spongejr#5845, Bowtieman#1999\nVersion: " + version + "\nProgramming Language: Node.js + Discord.js", message);
 };
 
 var HelpCommand = function(message, args){
     
-    var fn = "**HELP:**\n";
+    var fn = "";
     var page = 0 || (Math.floor(args[0])-1);
     if(page < 0 || page > Math.floor(Helps.length/5)){
         page = 0;
     }
     var maxx = (page*5)+5;
-    fn +="Page " + (page+1) + "/" + Math.floor((Helps.length/5)+1);
+    //fn +="Page " + (page+1) + "/" + Math.floor((Helps.length/5)+1);
     if(maxx >= Helps.length){maxx=Helps.length;}
     for(var i = page*5;i < maxx;i ++){
         //console.log(i);
         fn +="\n**" + Helps[i].name + "**\nValues: " + Helps[i].values + "\nDescription: " + Helps[i].d;
     }
     fn +="\n\nIf you want to switch to another page use **\"kb!help [page number]\"**";
-    message.reply(fn);
+    Message("Help - " + "Page " + ((page+1) + "/" + Math.floor((Helps.length/5)+1)), fn, message);
 };
 var InviteCommand = function(message){
     message.reply("\n**Invite link:**\nhttps://bit.ly/2VD18ef");
 };
 var VoteCommand = function(message){
-  message.reply("\n**Vote for The Kepler Bot:**\nhttps://bit.ly/2JbLSUf");
+  //message.reply("\n**Vote for The Kepler Bot:**\nhttps://bit.ly/2JbLSUf");
+  let embed = new Commando.RichEmbed()
+        .setAuthor(bot.user.username, bot.user.avatarURL)
+        .setTitle('Vote for The Kepler Bot!')
+        .setColor("22ff88")
+        .setURL('https://bit.ly/2JbLSUf')
+        .setTimestamp();
+
+    message.channel.send(embed);
 };
 var ServerCommand = function(message){
   let exampleEmbed = new Commando.RichEmbed()
+        .setAuthor(bot.user.username, bot.user.avatarURL)
         .setTitle('KeplerBot\'s official server!')
         .setColor("22ff88")
         .setURL('https://discord.gg/SyySZ4E')
@@ -376,7 +397,7 @@ var levelUp = function(I, message){
           I.xp -=I.level*10;
           I.level ++;
   }
-  message.channel.send(xp + "You got to level " + I.level + "! " + xp);
+  Message("LEVEL UP", xp + "You got to level " + I.level + "! " + xp, message, "eeee33");
 };
 var tokenToUser = async function(id){
     await bot.fetchUser(id.toString())
@@ -498,7 +519,7 @@ var MineCommand = function(message, args){
           I.picky --;
       }
       I.name = message.author.username.toString();
-      var m = "\n**Your Arena**";
+      var m = "";
       for(var i = 0;i < 7;i ++){
           m = m + "\n";
           for(var j = 0;j < 7;j ++){
@@ -558,7 +579,12 @@ var MineCommand = function(message, args){
           }
       }
       //console.log(m.length);
-      message.reply(m);
+      /*let embed = new Commando.RichEmbed()
+        .setAuthor(bot.user.username, bot.user.avatarURL)
+        .setTitle("**Your Arena**")
+        .setDescription(m)
+        .setColor("33ee33");*/
+      message.channel.send("**Your Arena:**" + m);
       if(args[0] === ""){
         message.channel.send("**Don't forget to add a direction at the end in the direction you want to mine!**");
       }
@@ -578,7 +604,7 @@ var MineCommand = function(message, args){
           "Join The Kepler Bot Official Server by doing `kb!server`!",
       ];
       if(Math.random()*10 > 7.8){
-          message.channel.send("**TIP: **" + tips[Math.floor(Math.random()*tips.length)]);
+          message.channel.send("**TIP: **\n" + tips[Math.floor(Math.random()*tips.length)]);
       }
       addPickaxeRoles(message, I);
     }
@@ -588,14 +614,36 @@ var MineCommand = function(message, args){
     
 };
 var InvCommand = function(message, args){
-    var yourarray = findYourId(message.author.id);
-        if(yourarray == -1){
+  var ID = args[0] || message.author.id;
+  if(ID === "" || ID === " "){
+    ID = message.author.id;
+  }
+  console.log(ID);
+  
+  if(ID[0] === "<" && ID[1] === "@"){
+    var tex = ID;
+    var TX = "";
+    var TODOD = 2;
+    if(ID[2] === "!"){
+      TODOD = 3;
+    }
+    for(var i = TODOD;i < tex.length-1;i ++){
+      TX +=tex[i];
+    }
+    ID = TX;
+  }
+    var yourarray = findYourId(ID);
+        if(yourarray == -1 && message.author.id === ID){
             makeNewInventory(message);
             yourarray = Invs.length-1;
         }
+        else if(yourarray == -1){
+          Message("Uh oh!", "This user doesn't exist yet!", message, "ee3333");
+          return;
+        }
         var I = Invs[yourarray];
         updateInventory(I);
-        I.name = message.author.username.toString();
+        if(ID === message.author.id){ I.name = message.author.username.toString();}
         var XPP = "";
         for(var i = 0;i < 10;i ++){
             if(I.xp/((I.level*10)/10) >= i+1){
@@ -632,9 +680,9 @@ var InvCommand = function(message, args){
                 }
             }
         }
-        message.reply("\n **" + I.name + "'s Inventory** " + pickaxes[I.pick] + "\nYou have mined:\n" 
-        + stone + " " + I.inv.stone + "\n" + coal + " " + I.inv.coal + "\n" + iron + " " + I.inv.iron + "\n" + gold + " " 
-        + I.inv.gold + "\n" + diamond + " " + I.inv.diamond + "\n\nLevel: " + I.level + "\n" + xp + XPP);
+        var MMM =  "they have mined:\n" + stone + " " + I.inv.stone + "\n" + coal + " " + I.inv.coal + "\n" + iron + " " + I.inv.iron + "\n" + gold + " " 
+        + I.inv.gold + "\n" + diamond + " " + I.inv.diamond + "\n\nLevel: " + I.level + "\n" + xp + XPP;
+        //message.reply();
         var pickss = "";
         for(var i = 0;i < I.picks.length;i ++){
           if(I.picks[i]){
@@ -644,7 +692,8 @@ var InvCommand = function(message, args){
             pickss +=air;
           }
         }
-        message.channel.send("**YOUR PICKAXES: **" + pickss + "\n**Do kb!pickaxe [pickaxe] to switch your pickaxe!**");
+        MMM +="\n\n**THEIR PICKAXES: **" + pickss + "\n**Do kb!pickaxe [pickaxe] to switch your pickaxe!**";
+        Message("**" + I.name + "'s Inventory**" + pickaxes[I.pick], MMM, message);
         addPickaxeRoles(message, I);
 };
 var RegenLandCommand = function(message, args){
@@ -659,11 +708,11 @@ var RegenLandCommand = function(message, args){
       I.lastregen = Date.now();
       I.name = message.author.username.toString();
       createLand(I);
-      message.reply("Created land! Do the `kb!mine` command to mine in it!");
+      Message("Created land!", "Do the `kb!mine` command to mine in it!", message);
       addPickaxeRoles(message, I);
     }
     else{
-      message.channel.send("Please wait " + (((I.lastregen+regentime)-Date.now())/1000).toFixed(1) + " Seconds!");
+      Message("A little too quick!", "Please wait " + (((I.lastregen+regentime)-Date.now())/1000).toFixed(1) + " Seconds!", message, "ee3333");
     }
 };
 var filename = "./datas.json";
@@ -680,7 +729,6 @@ var BackupQuick = function(){
     });
 };
 var BackupCommand = function(message, args){
-    message.reply("Incoming Spam!\nBackup is now starting!");
     var inv = {Invs:Invs};
     var data = JSON.stringify(inv);
     var Namee = "data" + Date.now() + ".json";
@@ -692,10 +740,17 @@ var BackupCommand = function(message, args){
       const rawdata = fs.readFileSync('datas.json');  
       const inv = JSON.parse(rawdata);  
       //console.log(inv.Invs);  
-      message.reply("Data has been backed up successfully! There are " + inv.Invs.length + " user datas stored!");
+      //Message("Backup Success!", "Data has been backed up successfully! There are " + inv.Invs.length + " user datas stored!", message, "ee7733");
       Invs = inv.Invs;
       var myAttachment = new Commando.Attachment("./datas.json", Namee);
-      message.channel.send("Here is the .json file!", myAttachment);
+      let embed = new Commando.RichEmbed()
+            .setAuthor(bot.user.username, bot.user.avatarURL)
+            .addField('Backup Success: ' + inv.Invs.length + " User Datas stored!", "Here is your .json file! :D")
+            .setColor("22ff88")
+            .attachFile(myAttachment)
+
+        message.channel.send(embed);
+      //message.channel.send("Here is the .json file!", myAttachment);
       /*for(var i = 0;i < Math.floor(data.length/1000)+1;i ++){
         message.channel.send("```" + data.slice(i*1000, i*1000+1000) + "```");
       }*/
@@ -717,42 +772,42 @@ var CraftCommand = function(message, args){
         I.pick = 1;
         I.inv.stone -=60;
         I.picks[1] = true;
-        message.reply("You just got the stone pickaxe! Nice work! " + pickaxes[I.pick]);
+        Message("Crafting Table", "You just got the stone pickaxe! Nice work! " + pickaxes[I.pick], message);
     }
     else if((args[0] === 1 || args[0] === "stone") && I.picks[1] === false){
-        message.reply("You need " + (60-I.inv.stone) + " more " + stone);
+        Message("Crafting Table", "You need " + (60-I.inv.stone) + " more " + stone, message);
     }
     else if(args[0] === 1 || args[0] === "stone"){
-      message.reply("You own this pickaxe!");
+      Message("Crafting Table", "You own this pickaxe!", message);
     }
     //iron
     if(I.inv.iron >= 60 && (args[0] === 2 || args[0] === "iron") && I.picks[2] === false){
         I.pick = 2;
         I.inv.iron -=60;
         I.picks[2] = true;
-        message.reply("You just got the iron pickaxe! Good going! " + pickaxes[I.pick]);
+        Message("Crafting Table", "You just got the iron pickaxe! Good going! " + pickaxes[I.pick], message);
     }
     else if((args[0] === 2 || args[0] === "iron") && I.picks[2] === false){
-        message.reply("You need " + (60-I.inv.iron) + " more " + iron);
+        Message("Crafting Table", "You need " + (60-I.inv.iron) + " more " + iron, message);
     }
     else if(args[0] === 2 || args[0] === "iron"){
-      message.reply("You own this pickaxe!");
+      Message("Crafting Table", "You own this pickaxe!", message);
     }
     //diamond
     if(I.inv.diamond >= 60 && (args[0] === 3 || args[0] === "diamond") && I.picks[3] === false){
         I.pick = 3;
         I.picks[3] = true;
         I.inv.diamond -=60;
-        message.reply("You just got the DIAMOND pickaxe! What a god! " + pickaxes[I.pick]);
+        Message("Crafting Table", "You just got the DIAMOND pickaxe! What a god! " + pickaxes[I.pick], message);
     }
     else if((args[0] === 3 || args[0] === "diamond") && I.picks[3] === false){
-        message.reply("You need " + (60-I.inv.diamond) + " more " + diamond);
+        Message("Crafting Table", "You need " + (60-I.inv.diamond) + " more " + diamond, message);
     }
     else if(args[0] === 3 || args[0] === "diamond"){
-      message.reply("You own this pickaxe!");
+      Message("Crafting Table", "You own this pickaxe!", message);
     }
     if(args[0] === ""){
-        message.channel.send("Please add in what pickaxe you want to craft! iron, stone, diamond, etc."); 
+        Message("Crafting Table", "Please add in what pickaxe you want to craft! iron, stone, diamond, etc.", message); 
     }
     addPickaxeRoles(message, I);
 };
@@ -865,7 +920,12 @@ var MultiMineCommand = function(message, args){
               }
           }
       }
-      message.reply(m);
+      /*let embed = new Commando.RichEmbed()
+        .setAuthor(bot.user.username, bot.user.avatarURL)
+        .setTitle("**Multiplayer Arena**")
+        .setDescription(m)
+        .setColor("33ee33");*/
+      message.channel.send(m);
       if(args[0] === ""){
         message.channel.send("**Don't forget to add a direction at the end in the direction you want to mine!**");
       }
@@ -894,7 +954,7 @@ var TopListCommand = function(message, args){
         TopInvs.push(Invs[i]);
     }
     TopInvs.sort(function(a,b){return b.level-a.level;});
-    var ms = "**TOP 10 LEADERBOARD**\n";
+    var ms = "";
     var maxx = TopInvs.length;
     if(maxx > 10){ maxx = 10;}
     for(var i = 0;i < maxx;i ++){
@@ -905,7 +965,7 @@ var TopListCommand = function(message, args){
         ms +=" - Level " + TopInvs[i].level + "\n";
     }
     if(1+findYourPlace(message.author.id) > 10){ ms +="...\n" + (1+findYourPlace(message.author.id)) + ". " + TopInvs[findYourPlace(message.author.id)].name + " - Level " + TopInvs[findYourPlace(message.author.id)].level;}
-    message.reply(ms);
+    Message("Top 10 Leaderboard!", ms, message, "eeee33");
     addPickaxeRoles(message, I);
 };
 var PickaxeCommand = function(message, args){
@@ -927,15 +987,15 @@ var PickaxeCommand = function(message, args){
     if(pickk === "donator"){pickk = 5;}
     pickk = Math.floor(pickk);
     if(pickk < 0 || pickk > I.picks.length-1){
-      message.channel.send("That pickaxe doesn't exist!");
+      Message("Uh oh!", "That pickaxe doesn't exist!", message, "ee3333");
       return;
     }
     if(I.picks[pickk] === true){
       I.pick = pickk;
-      message.channel.send("Pickaxe switched to " + pickaxes[pickk]);
+      Message("Pickaxe Switched!", "Pickaxe switched to " + pickaxes[pickk], message);
     }
     else{
-      message.channel.send("You don't own that pick!");
+      Message("Uh oh!", "You don't own that pick!", message, "ee3333");
     }
 };
 var CrateCommand = function(message, args){
@@ -953,7 +1013,7 @@ var CrateCommand = function(message, args){
       for(var i = 0;i < 4;i ++){
         CR +="\n" + crates[i] + " **" + I.crates[i] + "**"; 
       }
-      message.channel.send("**YOUR CRATES: **" + crates[4] + CR + "\n**Do `kb!crate [common:uncommon:rare:legendary]` to open a crate of that type**");
+      Message("**YOUR CRATES: **"+ crates[4], CR + "\n**Do `kb!crate [common:uncommon:rare:legendary]` to open a crate of that type**", message);
         
       return; 
     }
@@ -961,25 +1021,25 @@ var CrateCommand = function(message, args){
     var chance = Math.floor(Math.random()*5); //0, 1, 3, 5, 10
     I.crates[0] --;
     if(chance === 0){
-      message.reply("You just won 50 XP!");
+      Message("Common Crate", "You just won 50 XP!", message, "3ae842");
       I.xp +=50;
     }
     if(chance === 1){
-      message.reply("You just won 20 Gold");
+      Message("Common Crate", "You just won 20 Gold", message, "3ae842");
       I.inv.gold +=20;
       I.xp +=5*20;
     }
     if(chance === 2){
-      message.reply("You just won 20 Iron");
+      Message("Common Crate", "You just won 20 Iron", message, "3ae842");
       I.inv.iron +=20;
       I.xp +=3*20;
     }
     if(chance === 3){
-      message.reply("You just won 100 Stone");
+      Message("Common Crate", "You just won 100 Stone", message, "3ae842");
       I.inv.stone +=100;
     }
     if(chance === 4){
-      message.reply("You just won 30 Coal");
+      Message("Common Crate", "You just won 30 Coal", message, "3ae842");
       I.inv.coal +=30;
       I.xp +=30;
     }
@@ -988,26 +1048,26 @@ var CrateCommand = function(message, args){
     var chance = Math.floor(Math.random()*5); //0, 1, 3, 5, 10
     I.crates[1] --;
     if(chance === 0){
-      message.reply("You just won 100 XP!");
+      Message("Uncommon Crate", "You just won 100 XP!", message, "eadb3a");
       I.xp +=100;
     }
     if(chance === 1){
-      message.reply("You just won 25 Gold");
+      Message("Uncommon Crate", "You just won 25 Gold", message, "eadb3a");
       I.inv.gold +=25;
       I.xp +=5*25;
     }
     if(chance === 2){
-      message.reply("You just won 30 Iron");
+      Message("Uncommon Crate", "You just won 30 Iron", message, "eadb3a");
       I.inv.iron +=30;
       I.xp +=3*30;
     }
     if(chance === 3){
-      message.reply("You just levelled up!");
+      Message("Uncommon Crate", "You just levelled up!", message, "eadb3a");
       I.level ++;
       I.xp = 0;
     }
     if(chance === 4){
-      message.reply("You just won 10 Diamonds!");
+      Message("Uncommon Crate", "You just won 10 Diamonds!", message, "eadb3a");
       I.inv.diamond +=10;
       I.xp +=10*10;
     }
@@ -1016,61 +1076,72 @@ var CrateCommand = function(message, args){
     var chance = Math.floor(Math.random()*5); //0, 1, 3, 5, 10
     I.crates[2] --;
     if(chance === 0){
-      message.reply("You just won 250 XP!");
+      Message("Rare Crate", "You just won 250 XP!", message, "3b82ed");
       I.xp +=250;
     }
     if(chance === 1){
-      message.reply("You just won 50 Gold!");
+      Message("Rare Crate", "You just won 50 Gold!", message, "3b82ed");
       I.inv.gold +=50;
       I.xp +=5*50;
     }
     if(chance === 2){
-      message.reply("You just won 15 Diamonds!");
+      Message("Rare Crate", "You just won 15 Diamonds!", message, "3b82ed");
       I.inv.diamond +=15;
       I.xp +=15*10;
     }
     if(chance === 3){
-      message.reply("You just won 25 Diamonds!");
+      Message("Rare Crate", "You just won 25 Diamonds!", message, "3b82ed");
       I.inv.diamond +=25;
       I.xp +=25*10;
     }
     if(chance === 4){
-      message.reply("You just earned a bonus crate!");
+      var BB = "You just earned a bonus crate!";
       var cratechance = Math.floor(Math.random()*10)+1;
-      if(cratechance === 10){ I.crates[3] ++; message.channel.send("You got a Legendary Crate! " + crates[3]);}
-      else if(cratechance >= 8){ I.crates[2] ++; message.channel.send("You got a Rare Crate! " + crates[2]);}
-      else if(cratechance >= 5){ I.crates[1] ++; message.channel.send("You got a Uncommon Crate! " + crates[1]);}
-      else{ I.crates[0] ++; message.channel.send("You got a Common Crate! " + crates[0]);}
+      if(cratechance === 10){ I.crates[3] ++; BB+="\nYou got a Legendary Crate! " + crates[3];}
+      else if(cratechance >= 8){ I.crates[2] ++; BB+="\nYou got a Rare Crate! " + crates[2];}
+      else if(cratechance >= 5){ I.crates[1] ++; BB+="\nYou got a Uncommon Crate! " + crates[1];}
+      else{ I.crates[0] ++; BB+="\nYou got a Common Crate! " + crates[0];}
+      Message("Rare Crate", BB, message, "3b82ed");
     }
   }
   if(args[0] === "legendary" && I.crates[3] > 0){
     var chance = Math.floor(Math.random()*4); //0, 1, 3, 5, 10
     I.crates[3] --;
     if(chance === 0){
-      message.reply("You just won 500 XP!");
+      Message("Legendary Crate", "You just won 500 XP!", message, "bc3bef");
       I.xp +=500;
     }
     if(chance === 1){
-      message.reply("You just won the VOTING PICKAXE!");
+      Message("Legendary Crate", "You just won the VOTING PICKAXE!", message, "bc3bef");
       I.picks[4] = true;
       I.pick = 4;
     }
     if(chance === 2){
-      message.reply("You just won 50 Diamonds!");
+      Message("Legendary Crate", "You just won 50 Diamonds!", message, "bc3bef");
       I.inv.diamond +=50;
       I.xp +=50*10;
     }
     if(chance === 3){
-      message.reply("You just earned a bonus crate!");
+      var BB = "You just earned a bonus crate!";
       var cratechance = Math.floor(Math.random()*10)+1;
-      if(cratechance === 10){ I.crates[3] ++; message.channel.send("You got a Legendary Crate! " + crates[3]);}
-      else if(cratechance >= 8){ I.crates[2] ++; message.channel.send("You got a Rare Crate! " + crates[2]);}
-      else if(cratechance >= 5){ I.crates[1] ++; message.channel.send("You got a Uncommon Crate! " + crates[1]);}
-      else{ I.crates[0] ++; message.channel.send("You got a Common Crate! " + crates[0]);}
+      if(cratechance === 10){ I.crates[3] ++; BB+="\nYou got a Legendary Crate! " + crates[3];}
+      else if(cratechance >= 8){ I.crates[2] ++; BB+="\nYou got a Rare Crate! " + crates[2];}
+      else if(cratechance >= 5){ I.crates[1] ++; BB+="\nYou got a Uncommon Crate! " + crates[1];}
+      else{ I.crates[0] ++; BB+="\nYou got a Common Crate! " + crates[0];}
+      Message("Legendary Crate", BB, message, "bc3bef");
     }
   }
 };
 var GiveCommand = function(message, args){
+  console.log(args[0].toString());
+  if(args[0][0] === "<" && args[0][1] === "@"){
+    var tex = args[0];
+    var TX = "";
+    for(var i = 2;i < tex.length-1;i ++){
+      TX +=tex[i];
+    }
+    args[0] = TX;
+  }
     var yourarray = findYourId(message.author.id);
     if(yourarray == -1){
         makeNewInventory(message);
@@ -1082,13 +1153,13 @@ var GiveCommand = function(message, args){
     I.name = message.author.username.toString();
   if(I.id === "374929883698036736"){
     if(args[0] === "" || args[0] === undefined){
-      message.channel.send("Do kb!give <id> <pick:ore:xp> <item:number>");
+      Message("Uh oh!", "Do kb!give <id> <pick:ore:xp:levels> <item:number>", message, "ee3333");
       return;
     }
     else{
       var selectedid = findYourId(args[0].toString());
       if(selectedid === -1){
-        message.channel.send("This person isn't a miner!");
+        Message("Uh oh!", "This person isn't a miner!", message, "ee3333");
         return;
       }
       var SI = Invs[selectedid];
@@ -1096,42 +1167,42 @@ var GiveCommand = function(message, args){
       if(args[1] === "pick"){
         SI.pick = Math.floor(args[2]);
         SI.picks[Math.floor(args[2])] = true;
-        message.channel.send("Gave " + SI.name + " the " + pickaxes[SI.pick] + " Pickaxe!");
+        Message("Give Command", "Gave " + SI.name + " the " + pickaxes[SI.pick] + " Pickaxe!", message);
       }
       else{
         if(args[1] === "stone"){
           SI.inv.stone +=Math.floor(args[2]);
-          message.channel.send("Gave " + SI.name + " " + args[2] + " Stone!");
+          Message("Give Command", "Gave " + SI.name + " " + args[2] + " Stone!", message);
         }
         if(args[1] === "coal"){
           SI.inv.coal +=Math.floor(args[2]);
-          message.channel.send("Gave " + SI.name + " " + args[2] + " Coal!");
+          Message("Give Command", "Gave " + SI.name + " " + args[2] + " Coal!", message);
         }
         if(args[1] === "iron"){
           SI.inv.iron +=Math.floor(args[2]);
-          message.channel.send("Gave " + SI.name + " " + args[2] + " Iron!");
+          Message("Give Command", "Gave " + SI.name + " " + args[2] + " Iron!", message);
         }
         if(args[1] === "gold"){
           SI.inv.gold +=Math.floor(args[2]);
-          message.channel.send("Gave " + SI.name + " " + args[2] + " Gold!");
+          Message("Give Command", "Gave " + SI.name + " " + args[2] + " Gold!", message);
         }
         if(args[1] === "diamond"){
           SI.inv.diamond +=Math.floor(args[2]);
-          message.channel.send("Gave " + SI.name + " " + args[2] + " Diamonds!");
+          Message("Give Command", "Gave " + SI.name + " " + args[2] + " Diamonds!", message);
         }
         if(args[1] === "xp"){
           SI.xp +=Math.floor(args[2]);
-          message.channel.send("Gave " + SI.name + " " + args[2] + " XP!");
+          Message("Give Command", "Gave " + SI.name + " " + args[2] + " XP!", message);
         }
         if(args[1] === "levels"){
           SI.level +=Math.floor(args[2]);
-          message.channel.send("Gave " + SI.name + " " + args[2] + " Levels!");
+          Message("Give Command", "Gave " + SI.name + " " + args[2] + " Levels!", message);
         }
       }
     }
   }
   else{
-    message.channel.send("You can't use this command unless you are KeplerTeddy!");
+    Message("Uh oh!", "You can't use this command unless you are KeplerTeddy!", message, "ee3333");
     return;
   }
 };
@@ -1147,7 +1218,7 @@ var StatsCommand = function(message){
         activethisweek ++;
       }
     }
-    message.reply("\n**Stats!:**\nPlayers: **" + Invs.length + "**\nServers: **" + bot.guilds.size + "**\nActive in the past 24 hours: **" + activethisday + "**\nActive in the past 7 Days: **" + activethisweek + "**");
+    Message("**Stats!:**","Players: **" + Invs.length + "**\nServers: **" + bot.guilds.size + "**\nActive in the past 24 hours: **" + activethisday + "**\nActive in the past 7 Days: **" + activethisweek + "**", message);
 };
 /** MESSAGE FUNCTION */
 dbl.webhook.on('ready', hook => {
@@ -1186,6 +1257,7 @@ dbl.webhook.on('vote', vote => {
 dbl.webhook.on('error', e => {
  console.log(`Oops! ${e}`);
 });
+var bottype = Math.floor(Math.random()*2);
 bot.on('error', error => { console.log(error);});
 bot.on('message', message => {
   //console.log(message.author);
@@ -1198,7 +1270,7 @@ bot.on('message', message => {
             } else {
                 fullCmd = message.content; //message stays as it is
             }
-            var nameCmd = fullCmd.split(' ')[0]; //gets the name of the command
+            var nameCmd = fullCmd.split(' ')[0]; //gets the name of the commandi
             //console.log(fullCmd);
 
             var args = fullCmd.replace(nameCmd, ''); //gets the args and takes out the name of the command
@@ -1288,10 +1360,21 @@ bot.on('ready', function(){
   setInterval(() => {
         dbl.postStats(bot.guilds.size);
         if(!maintenance){
-          bot.user.setActivity(bot.guilds.size + " Servers | kb!help", { type: 'WATCHING' })
-    .then(presence => console.log(`Activity set!`))
-    .catch(console.error);
-        BackupQuick();}
+          if(bottype === 0){
+            bottype ++;
+            bot.user.setActivity(bot.guilds.size + " Servers | kb!help", { type: 'WATCHING' })
+            .then(presence => console.log(`Activity set!`))
+            .catch(console.error);
+                BackupQuick();
+          }
+          if(bottype === 1){
+            bottype = 0;
+            bot.user.setActivity(Invs.length + " Miners | kb!help", { type: 'WATCHING' })
+            .then(presence => console.log(`Activity set!`))
+            .catch(console.error);
+                BackupQuick();
+          }
+        }
     }, 600000);
     if(maintenance){
         bot.user.setActivity("Maintenance!!!", { type: 'LISTENING' })
@@ -1307,3 +1390,4 @@ bot.on('ready', function(){
 });
 
 bot.login(process.env.TOKEN);
+
