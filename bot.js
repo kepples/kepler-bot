@@ -1176,11 +1176,6 @@ var MultiMineCommand = function(message, args){
               }
           }
       }
-      /*let embed = new Commando.RichEmbed()
-        .setAuthor(bot.user.username, bot.user.avatarURL)
-        .setTitle("**Multiplayer Arena**")
-        .setDescription(m)
-        .setColor("33ee33");*/
       message.channel.send(m);
       if(args[0] === ""){
         message.channel.send("**Don't forget to add a direction at the end in the direction you want to mine!**");
@@ -1680,90 +1675,82 @@ bot.on('message', message => {
             } else {
                 fullCmd = message.content; //message stays as it is
             }
-            var nameCmd = fullCmd.split(' ')[0]; //gets the name of the commandi
-            //console.log(fullCmd);
+            var nameCmd = fullCmd.split(' ')[0]; //gets the name of the commands
 
             var args = fullCmd.replace(nameCmd, ''); //gets the args and takes out the name of the command
             nameCmd = nameCmd.toLowerCase(); //converts the command to lowercase, so Flip and flip will work for example.
             args = args.slice(1); //takes out the space before the args
             args = args.split(' ');
-            //console.log(args[0]);
-            if(nameCmd === "flip" || nameCmd === "f" || nameCmd === "coin"){
-                CoinFlipCommand(message);
-            }
-            else if(nameCmd === "dice" || nameCmd === "d" || nameCmd === "roll"){
-                DiceRollCommand(message);
-            }
-            else if(nameCmd === "pickfrom" || nameCmd === "pick" || nameCmd === "pf"){
-                PickFromCommand(message, args);
-            }
-            else if(nameCmd === "about" || nameCmd === "ab"){
-                AboutCommand(message);
-            }
-            else if(nameCmd === "server"){
-                ServerCommand(message);
-            }
-            else if(nameCmd === "vote" || nameCmd === "v"){
-                VoteCommand(message);
-            }
-            else if(nameCmd === "help" || nameCmd === "h"){
-                HelpCommand(message, args);
-            }
-            else if(nameCmd === "invite"){
-                InviteCommand(message);
-            }
-            else if(nameCmd === "stats"){
-                StatsCommand(message);
-            }
-            else if(nameCmd === "shop" || nameCmd === "s"){
-                ShopCommand(message, args);
-            }
-            else if(nameCmd === "mine" || nameCmd === "m"){
-                MineCommand(message, args);
-            }
-            else if(nameCmd === "inv" || nameCmd === "inventory"){
-                InvCommand(message, args);
-            }
-            else if(nameCmd === "regenland" || nameCmd === "rl"){
-                RegenLandCommand(message, args);
-            }
-            else if(nameCmd === "enchantments" || nameCmd === "enchant"){
-                EnchantCommand(message);
-            }
-            else if(nameCmd === "backup" && (message.author.id.toString() === '374929883698036736' || message.author.id.toString() === "542878436885266474") && message.channel.type === "dm"){
-                BackupCommand(message, args);
-            }
-            else if(nameCmd === "backup" && (message.member.roles.find(r => r.name === "Backup-ers") && message.guild.id === "550036987772403714") && message.channel.type !== "dm"){
-                BackupCommand(message, args);
-            }
-            else if(nameCmd === "backup"){
-                message.reply("This only works in the Kepler Bot Server and you have the Backup-ers role! Or if you are KeplerTeddy in DM");
-                //message.reply("This is better in DM.");
-            }
-            else if(nameCmd === "craft"){
-                CraftCommand(message, args);
-            }
-            else if(nameCmd === "multimine" || nameCmd === "mm"){
-                MultiMineCommand(message, args);
-            }
-            else if(nameCmd === "toplist" || nameCmd === "top"){
-                TopListCommand(message, args);
-            }
-            else if(nameCmd === "pickaxe"){
-                PickaxeCommand(message, args);
-            }
-            else if(nameCmd === "crate"){
-                CrateCommand(message, args);
-            }
-            else if(nameCmd === "give"){
-                GiveCommand(message, args);
-            }
-            else{
-                //message.reply("I have not heard of this command! Do kb!help to see the list of commands!");
-            }
-        }
-        else if(maintenance === true){
-            //message.reply("The Kepler Bot is under maintenance! Try again later!");
+          switch(nameCmd){
+            case "flip"||"f"||"coin":
+              CoinFlipCommand(message);
+              break;
+            case "dice"||"d"||"roll":
+              DiceRollCommand(message);  
+              break;
+            case "pickform"||"pick"||"pf":
+              PickFromCommand(message, args);
+              break;
+            case "about"||"ab":
+              AboutCommand(message);
+              break;
+            case "server":
+              ServerCommand(message);
+              break;
+            case "vote"||"v":
+              VoteCommand(message);
+              break;
+            case "help"||"h":
+              HelpCommand(message, args);
+              break;
+            case "invite":
+              InviteCommand(message);
+              break;
+            case "stats":
+              StatsCommand(message);
+              break;
+            case "shop"||"s":
+              ShopCommand(message, args);
+              break;
+            case "mine"||"m":
+              MineCommand(message, args);
+              break;
+            case "inv"||"inventory":
+              InvCommand(message, args);
+              break;
+            case "regenland"||"rl":
+              RegenLandCommand(message, args);
+              break;
+            case "enchantments"||"enchant":
+              EnchantCommand(message);
+              break;
+            case "backup"&&(message.author.id.toString() === '374929883698036736' || message.author.id.toString() === "542878436885266474")&&message.channel.type === "dm":
+              BackupCommand(message, args);
+              break;
+            case "backup"&&(message.member.roles.find(r => r.name === "Backup-ers") && message.guild.id === "550036987772403714")&&message.channel.type !== "dm":
+              BackupCommand(message, args);
+              break;
+            case "backup":
+              message.reply("This only works in the Kepler Bot Server and you have the Backup-ers role! Or if you are KeplerTeddy in DM");
+              break;
+            case "craft":
+              CraftCommand(message, args);
+              break;
+            case "multmine"||"mm":
+              MultiMineCommand(message, args);
+              break;
+            case "toplist"||"top":
+              TopListCommand(message, args);
+              break;
+            case "pixaxe":
+              PickaxeCommand(message, args);
+              break;
+            case "crate":
+              CrateCommand(message, args);
+              break;
+            case "give":
+              GiveCommand(message, args);
+          }
         }
     }
     else{
