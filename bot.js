@@ -19,15 +19,18 @@ setInterval(() => {
 //Your bot code goes down here 👇
 const Commando = require('discord.js'); //there is no commando
 const fs = require('fs');
+const moment = require('moment');
 const bot = new Commando.Client({commandPrefix: 'kb!'});
 const TOKEN = process.env.TOKEN;
 const DBL = require('dblapi.js');
-const dbl = new DBL(process.env.DBLTOKEN, { webhookServer: server, webhookAuth: 'authorkeplerbot' }, bot);
+const dbl = new DBL(process.env.DBLTOKEN, { webhookServer: server, webhookAuth: 'webhook auth here' }, bot);
 const profanities = require("profanities");
 
 /** BIG VARIABLES */
 var maintenance = false;
-var version = "1.7.3";
+var version = "1.8 Brewers Update";
+var newfeatures = "**NEW FEATURES:**\n- Changable Prefixes\n- View Crafting Recipes\n- New Brewing Stand\n- Any Pickaxe can go to the Nether!\n- Haste, Luck and Magnet potions!\n- Diamonds, Gold and Emeralds also spawn in the nether\n- Blaze Rod Ore\n- Three New Nether Pickaxes\n- Any non trans dimensional pickaxes will take 25% longer to mine with.\n- Upgraded Textures in inventory\n- Miner Score: Resets each month, top 10 get exclusive roles!\n- More People Listed in About Section\n**BUGS FIXED:**\n- Some Emojis wouldn't show up\n- Arena List is broken\nREPORT ANY BUGS YOU FIND TO ME!\n**DEVELOPER FEATURES:**- I can give you more materials\n- Reset Arena will let me nuke all arenas if it breaks.";
+var updatereleased = "2019/07/25"
 var waittime = 3000;
 var regentime = 180000;
 var lastmultiregen = 0;
@@ -106,9 +109,24 @@ var Helps = [
         d: "Create an arena, view a list, delete existing ones or join an arena! do kb!arena to see more!",
     },
     {
-        name: "kb!craft <pickaxe name or id>",
+        name: "kb!brew",
+        values: "many",
+        d: "Brew some potions!",
+    },
+    {
+        name: "kb!craft",
         values: "none",
-        d: "Crafts a pickaxe, requires 60 of a material.",
+        d: "Craft pickaxes, portals and more pickaxes!",
+    },
+    {
+        name: "kb!prefix",
+        values: "",
+        d: "Check out the current prefix of your server",
+    },
+    {
+        name: "kb!setprefix",
+        values: "",
+        d: "Set the prefix of TKM on your server, must be server administrator",
     },
     {
         name: "kb!multimine [dir/recreate] or kb!mm [dir/recreate]",
@@ -205,11 +223,19 @@ var Helps = [
         values: "none",
         d: "This exact command, known as the help command!",
     },
+    {
+        name: "kb!changelog",
+        values: "none",
+        d: "Vote for the Kepler Miner and get crates!",
+    },
 ];
 
 //Functions
+var ChangeLogCommand = function(message){
+    Message("**NEW FEATURES:** Version " + version + "! Released on " + updatereleased, newfeatures, message);
+};
 var AboutCommand = function(message){
-    Message("About The Kepler Miner: ", "Created and Developed by: KeplerTeddy#1138\nDevelopers: ! FireBobb !#9999 and CodeCypher#1337\nHelpers: spongejr#5845\nVersion: " + version + "\nProgramming Language: Node.js + Discord.js\nHosting: glitch.comm", message);
+    Message("About The Kepler Miner: ", "Created and Developed by: KeplerTeddy#1138\nDevelopers: WhiteRider#0428, ! FireBobb !#9999 and Zugky#0911\nHelpers: spongejr#5845\nBackup-ers: Nicholas#1138, __Timo_L_S__#9921 and WowMG#1230\nVersion: " + version + "\nProgramming Language: Node.js + Discord.js\nHosting: glitch.com", message);
 };
 
 var HelpCommand = function(message, args){
@@ -293,9 +319,10 @@ var createLand = function(I, dim){
     if(dim === undefined){
       dim = 0;
     }
+    var luckpot = (I.pots[1] > Date.now) ? 1.25 : 1;
     //pickaxe: 0 = wooden, 1 = stone, 2 = iron, 3 = diamond
     //ores: 0 = air, 1 = stone, 2 = coal, 3 = iron, 4 = gold, 5 = diamond, 6 = random ore, 7 = redstone, 8 = lapis, 9 = keplerium, a = obsidian
-    //nether ores: 0 = air, 1 = netherrack, 2 = soul sand, 3 = quartz ore
+    //nether ores: 0 = air, 1 = netherrack, 2 = soul sand, 3 = quartz ore, 4 = gold ore, 5 = diamond ore, 6 = emerald ore, 7 = blaze rod
     I.d = "";
     var pick = I.pick;
     for(var i = 0;i < 7;i ++){
@@ -303,7 +330,7 @@ var createLand = function(I, dim){
             var mathrandom = Math.random()*10;
             if(dim === 0){
               if(pick == 0){
-                  if(mathrandom >= 9-(I.en.luck*0.25)){
+                  if(mathrandom >= 9-(I.en.luck*0.25*luckpot)){
                       I.d += "2";
                   }
                   else if(mathrandom >= -1){
@@ -311,10 +338,10 @@ var createLand = function(I, dim){
                   }
               }
               else if(pick == 1){
-                  if(mathrandom >= 9-(I.en.luck*0.15)){
+                  if(mathrandom >= 9-(I.en.luck*0.15*luckpot)){
                       I.d += "3";
                   }
-                  else if(mathrandom >= 7-(I.en.luck*0.2)){
+                  else if(mathrandom >= 7-(I.en.luck*0.2*luckpot)){
                       I.d += "2";
                   }
                   else if(mathrandom >= -1){
@@ -322,16 +349,16 @@ var createLand = function(I, dim){
                   }
               }
               else if(pick == 2){
-                  if(mathrandom >= 9.6-(I.en.luck*0.07)){
+                  if(mathrandom >= 9.6-(I.en.luck*0.07*luckpot)){
                       I.d += "5";
                   }
-                  else if(mathrandom >= 9-(I.en.luck*0.1)){
+                  else if(mathrandom >= 9-(I.en.luck*0.1*luckpot)){
                       I.d += "4";
                   }
-                  else if(mathrandom >= 8-(I.en.luck*0.1)){
+                  else if(mathrandom >= 8-(I.en.luck*0.1*luckpot)){
                       I.d += "3";
                   }
-                  else if(mathrandom >= 6.5-(I.en.luck*0.12)){
+                  else if(mathrandom >= 6.5-(I.en.luck*0.12*luckpot)){
                       I.d += "2";
                   }
                   else if(mathrandom >= -1){
@@ -339,25 +366,25 @@ var createLand = function(I, dim){
                   }
               }
               else if(pick == 3){
-                  if(mathrandom >= 9.992-(I.en.luck*0.002)){
+                  if(mathrandom >= 9.992-(I.en.luck*0.002*luckpot)){
                       I.d += "9";
                   }
-                  else if(mathrandom >= 9.9-(I.en.luck*0.002)){
+                  else if(mathrandom >= 9.9-(I.en.luck*0.002*luckpot)){
                       I.d += "a";
                   }
-                  else if(mathrandom >= 9.8-(I.en.luck*0.05)){
+                  else if(mathrandom >= 9.8-(I.en.luck*0.05*luckpot)){
                       I.d += "6";
                   }
-                  else if(mathrandom >= 9.6-(I.en.luck*0.1)){
+                  else if(mathrandom >= 9.6-(I.en.luck*0.1*luckpot)){
                       I.d += "5";
                   }
-                  else if(mathrandom >= 8.9-(I.en.luck*0.11)){
+                  else if(mathrandom >= 8.9-(I.en.luck*0.11*luckpot)){
                       I.d += "4";
                   }
-                  else if(mathrandom >= 7.8-(I.en.luck*0.12)){
+                  else if(mathrandom >= 7.8-(I.en.luck*0.12*luckpot)){
                       I.d += "3";
                   }
-                  else if(mathrandom >= 6.4-(I.en.luck*0.13)){
+                  else if(mathrandom >= 6.4-(I.en.luck*0.13*luckpot)){
                       I.d += "2";
                   }
                   else if(mathrandom >= -1){
@@ -365,22 +392,22 @@ var createLand = function(I, dim){
                   }
               }
               else if(pick == 4){ //voter pick
-                  if(mathrandom >= 9.989-(I.en.luck*0.003)){
+                  if(mathrandom >= 9.989-(I.en.luck*0.003*luckpot)){
                       I.d += "9";
                   }
-                  if(mathrandom >= 9.85-(I.en.luck*0.05)){
+                  if(mathrandom >= 9.85-(I.en.luck*0.05*luckpot)){
                       I.d += "6";
                   }
-                  else if(mathrandom >= 9.3-(I.en.luck*0.1)){
+                  else if(mathrandom >= 9.3-(I.en.luck*0.1*luckpot)){
                       I.d += "5";
                   }
-                  else if(mathrandom >= 8.7-(I.en.luck*0.11)){
+                  else if(mathrandom >= 8.7-(I.en.luck*0.11*luckpot)){
                       I.d += "4";
                   }
-                  else if(mathrandom >= 7.7-(I.en.luck*0.12)){
+                  else if(mathrandom >= 7.7-(I.en.luck*0.12*luckpot)){
                       I.d += "3";
                   }
-                  else if(mathrandom >= 6.3-(I.en.luck*0.13)){
+                  else if(mathrandom >= 6.3-(I.en.luck*0.13*luckpot)){
                       I.d += "2";
                   }
                   else if(mathrandom >= -1){
@@ -388,22 +415,22 @@ var createLand = function(I, dim){
                   }
               }
               else if(pick == 5){ //donator pick
-                  if(mathrandom >= 9.98-(I.en.luck*0.0035)){
+                  if(mathrandom >= 9.98-(I.en.luck*0.0035*luckpot)){
                       I.d += "9";
                   }
-                  else if(mathrandom >= 9.8-(I.en.luck*0.08)){
+                  else if(mathrandom >= 9.8-(I.en.luck*0.08*luckpot)){
                       I.d += "6";
                   }
-                  else if(mathrandom >= 9.2-(I.en.luck*0.1)){
+                  else if(mathrandom >= 9.2-(I.en.luck*0.1*luckpot)){
                       I.d += "5";
                   }
-                  else if(mathrandom >= 8.6-(I.en.luck*0.11)){
+                  else if(mathrandom >= 8.6-(I.en.luck*0.11*luckpot)){
                       I.d += "4";
                   }
-                  else if(mathrandom >= 7.8-(I.en.luck*0.13)){
+                  else if(mathrandom >= 7.8-(I.en.luck*0.13*luckpot)){
                       I.d += "3";
                   }
-                  else if(mathrandom >= 6.5-(I.en.luck*0.13)){
+                  else if(mathrandom >= 6.5-(I.en.luck*0.13*luckpot)){
                       I.d += "2";
                   }
                   else if(mathrandom >= -1){
@@ -411,19 +438,19 @@ var createLand = function(I, dim){
                   }
               }
               else if(pick == 6){ //gold pick
-                  if(mathrandom >= 9.5-(I.en.luck*0.2)){
+                  if(mathrandom >= 9.5-(I.en.luck*0.2*luckpot)){
                       I.d += "8";
                   }
-                  else if(mathrandom >= 9.0-(I.en.luck*0.2)){
+                  else if(mathrandom >= 9.0-(I.en.luck*0.2*luckpot)){
                       I.d += "7";
                   }
-                  else if(mathrandom >= 8.5-(I.en.luck*0.12)){
+                  else if(mathrandom >= 8.5-(I.en.luck*0.12*luckpot)){
                       I.d += "4";
                   }
-                  else if(mathrandom >= 7.9-(I.en.luck*0.13)){
+                  else if(mathrandom >= 7.9-(I.en.luck*0.13*luckpot)){
                       I.d += "3";
                   }
-                  else if(mathrandom >= 6.8-(I.en.luck*0.13)){
+                  else if(mathrandom >= 6.8-(I.en.luck*0.13*luckpot)){
                       I.d += "2";
                   }
                   else if(mathrandom >= -1){
@@ -431,19 +458,19 @@ var createLand = function(I, dim){
                   }
               }
               else if(pick == 7){ //redstone pick
-                  if(mathrandom >= 9.6-(I.en.luck*0.2)){
+                  if(mathrandom >= 9.6-(I.en.luck*0.2*luckpot)){
                       I.d += "8";
                   }
-                  else if(mathrandom >= 9.0-(I.en.luck*0.25)){
+                  else if(mathrandom >= 9.0-(I.en.luck*0.25*luckpot)){
                       I.d += "7";
                   }
-                  else if(mathrandom >= 8.7-(I.en.luck*0.2)){
+                  else if(mathrandom >= 8.7-(I.en.luck*0.2*luckpot)){
                       I.d += "4";
                   }
-                  else if(mathrandom >= 7.9-(I.en.luck*0.11)){
+                  else if(mathrandom >= 7.9-(I.en.luck*0.11*luckpot)){
                       I.d += "3";
                   }
-                  else if(mathrandom >= 6.8-(I.en.luck*0.11)){
+                  else if(mathrandom >= 6.8-(I.en.luck*0.11*luckpot)){
                       I.d += "2";
                   }
                   else if(mathrandom >= -1){
@@ -451,19 +478,19 @@ var createLand = function(I, dim){
                   }
               }
               else if(pick == 8){ //lapis pick
-                  if(mathrandom >= 9.4-(I.en.luck*0.25)){
+                  if(mathrandom >= 9.4-(I.en.luck*0.25*luckpot)){
                       I.d += "8";
                   }
-                  else if(mathrandom >= 9.0-(I.en.luck*0.2)){
+                  else if(mathrandom >= 9.0-(I.en.luck*0.2*luckpot)){
                       I.d += "7";
                   }
-                  else if(mathrandom >= 8.7-(I.en.luck*0.2)){
+                  else if(mathrandom >= 8.7-(I.en.luck*0.2*luckpot)){
                       I.d += "4";
                   }
-                  else if(mathrandom >= 7.9-(I.en.luck*0.11)){
+                  else if(mathrandom >= 7.9-(I.en.luck*0.11*luckpot)){
                       I.d += "3";
                   }
-                  else if(mathrandom >= 6.8-(I.en.luck*0.11)){
+                  else if(mathrandom >= 6.8-(I.en.luck*0.11*luckpot)){
                       I.d += "2";
                   }
                   else if(mathrandom >= -1){
@@ -471,28 +498,110 @@ var createLand = function(I, dim){
                   }
               }
               else if(pick == 9){ //keplerium pick
-                  if(mathrandom >= 9.9-(I.en.luck*0.01)){
+                  if(mathrandom >= 9.9-(I.en.luck*0.01*luckpot)){
                       I.d += "9";
                   }
-                  else if(mathrandom >= 9.2-(I.en.luck*0.08)){
+                  else if(mathrandom >= 9.2-(I.en.luck*0.08*luckpot)){
                       I.d += "8";
                   }
-                  else if(mathrandom >= 8.8-(I.en.luck*0.1)){
+                  else if(mathrandom >= 8.8-(I.en.luck*0.1*luckpot)){
                       I.d += "7";
                   }
-                  else if(mathrandom >= 8.6-(I.en.luck*0.1)){
+                  else if(mathrandom >= 8.6-(I.en.luck*0.1*luckpot)){
                       I.d += "6";
                   }
-                  else if(mathrandom >= 8.4-(I.en.luck*0.1)){
+                  else if(mathrandom >= 8.4-(I.en.luck*0.1*luckpot)){
                       I.d += "5";
                   }
-                  else if(mathrandom >= 8-(I.en.luck*0.1)){
+                  else if(mathrandom >= 8-(I.en.luck*0.1*luckpot)){
                       I.d += "4";
                   }
-                  else if(mathrandom >= 7.5-(I.en.luck*0.1)){
+                  else if(mathrandom >= 7.5-(I.en.luck*0.1*luckpot)){
                       I.d += "3";
                   }
-                  else if(mathrandom >= 6.5-(I.en.luck*0.1)){
+                  else if(mathrandom >= 6.5-(I.en.luck*0.1*luckpot)){
+                      I.d += "2";
+                  }
+                  else if(mathrandom >= -1){
+                      I.d += "1";
+                  }
+              }
+              else if(pick == 10){ //quartzpick
+                  if(mathrandom >= 9.989-(I.en.luck*0.003*luckpot)){
+                      I.d += "9";
+                  }
+                  if(mathrandom >= 9.85-(I.en.luck*0.05*luckpot)){
+                      I.d += "6";
+                  }
+                  else if(mathrandom >= 9.3-(I.en.luck*0.1*luckpot)){
+                      I.d += "5";
+                  }
+                  else if(mathrandom >= 8.7-(I.en.luck*0.11*luckpot)){
+                      I.d += "4";
+                  }
+                  else if(mathrandom >= 7.7-(I.en.luck*0.12*luckpot)){
+                      I.d += "3";
+                  }
+                  else if(mathrandom >= 6.3-(I.en.luck*0.13*luckpot)){
+                      I.d += "2";
+                  }
+                  else if(mathrandom >= -1){
+                      I.d += "1";
+                  }
+              }
+              
+              else if(pick == 11){ //pigmanpick
+                  if(mathrandom >= 9.91-(I.en.luck*0.01*luckpot)){
+                      I.d += "9";
+                  }
+                  else if(mathrandom >= 9.21-(I.en.luck*0.08*luckpot)){
+                      I.d += "8";
+                  }
+                  else if(mathrandom >= 8.81-(I.en.luck*0.1*luckpot)){
+                      I.d += "7";
+                  }
+                  else if(mathrandom >= 8.61-(I.en.luck*0.1*luckpot)){
+                      I.d += "6";
+                  }
+                  else if(mathrandom >= 8.41-(I.en.luck*0.1*luckpot)){
+                      I.d += "5";
+                  }
+                  else if(mathrandom >= 8-(I.en.luck*0.1*luckpot)){
+                      I.d += "4";
+                  }
+                  else if(mathrandom >= 7.5-(I.en.luck*0.1*luckpot)){
+                      I.d += "3";
+                  }
+                  else if(mathrandom >= 6.5-(I.en.luck*0.1*luckpot)){
+                      I.d += "2";
+                  }
+                  else if(mathrandom >= -1){
+                      I.d += "1";
+                  }
+              }
+              else if(pick == 9){ //blaze pick
+                  if(mathrandom >= 9.9-(I.en.luck*0.01*luckpot)){
+                      I.d += "9";
+                  }
+                  else if(mathrandom >= 9.2-(I.en.luck*0.08*luckpot)){
+                      I.d += "8";
+                  }
+                  else if(mathrandom >= 8.8-(I.en.luck*0.1*luckpot)){
+                      I.d += "7";
+                  }
+                  else if(mathrandom >= 8.6-(I.en.luck*0.1*luckpot)){
+                      I.d += "6";
+                  }
+                  else if(mathrandom >= 8.4-(I.en.luck*0.1*luckpot)){
+                      I.d += "5";
+                  }
+                  else if(mathrandom >= 8-(I.en.luck*0.1*luckpot)){
+                      I.d += "4";
+                  }
+                  else if(mathrandom >= 7.5-(I.en.luck*0.1*luckpot)){
+                      I.d += "3";
+                  }
+                  else if(mathrandom >= 6.5-(I.en.luck*0.1*luckpot)){
                       I.d += "2";
                   }
                   else if(mathrandom >= -1){
@@ -501,11 +610,50 @@ var createLand = function(I, dim){
               }
             }
             if(dim === 1){
-              if(pick == 3){
-                    if(mathrandom >= 9-(I.en.luck*0.25)){
+              if(pick == 0){
+                    if(mathrandom >= 9-(I.en.luck*0.15*luckpot)){
+                        I.d += "2";
+                    }
+                    else if(mathrandom >= -1){
+                        I.d += "1";
+                    }
+              }
+              if(pick == 1){
+                    if(mathrandom >= 8-(I.en.luck*0.20*luckpot)){
+                        I.d += "2";
+                    }
+                    else if(mathrandom >= -1){
+                        I.d += "1";
+                    }
+              }
+              if(pick == 2){
+                    if(mathrandom >= 9.5-(I.en.luck*0.1*luckpot)){
                         I.d += "3";
                     }
-                    else if(mathrandom >= 7-(I.en.luck*0.25)){
+                    else if(mathrandom >= 7-(I.en.luck*0.25*luckpot)){
+                        I.d += "2";
+                    }
+                    else if(mathrandom >= -1){
+                        I.d += "1";
+                    }
+              }
+              if(pick == 3){
+                    if(mathrandom >= 9.92-(I.en.luck*0.05*luckpot)){
+                        I.d += "7";
+                    }
+                    if(mathrandom >= 9.6-(I.en.luck*0.05*luckpot)){
+                        I.d += "6";
+                    }
+                    if(mathrandom >= 9.5-(I.en.luck*0.05*luckpot)){
+                        I.d += "5";
+                    }
+                    if(mathrandom >= 9.2-(I.en.luck*0.05*luckpot)){
+                        I.d += "4";
+                    }
+                    else if(mathrandom >= 8.9-(I.en.luck*0.20*luckpot)){
+                        I.d += "3";
+                    }
+                    else if(mathrandom >= 7-(I.en.luck*0.25*luckpot)){
                         I.d += "2";
                     }
                     else if(mathrandom >= -1){
@@ -513,10 +661,22 @@ var createLand = function(I, dim){
                     }
               }
               if(pick == 4){
-                    if(mathrandom >= 8.7-(I.en.luck*0.25)){
+                    if(mathrandom >= 9.9-(I.en.luck*0.05*luckpot)){
+                        I.d += "7";
+                    }
+                    if(mathrandom >= 9.56-(I.en.luck*0.05*luckpot)){
+                        I.d += "6";
+                    }
+                    if(mathrandom >= 9.43-(I.en.luck*0.05*luckpot)){
+                        I.d += "5";
+                    }
+                    if(mathrandom >= 9.1-(I.en.luck*0.05*luckpot)){
+                        I.d += "4";
+                    }
+                    else if(mathrandom >= 8.7-(I.en.luck*0.25*luckpot)){
                         I.d += "3";
                     }
-                    else if(mathrandom >= 6.9-(I.en.luck*0.25)){
+                    else if(mathrandom >= 6.9-(I.en.luck*0.25*luckpot)){
                         I.d += "2";
                     }
                     else if(mathrandom >= -1){
@@ -524,10 +684,69 @@ var createLand = function(I, dim){
                     }
               }
               if(pick == 5){
-                    if(mathrandom >= 8.6-(I.en.luck*0.25)){
+                    
+                    if(mathrandom >= 9.88-(I.en.luck*0.05*luckpot)){
+                        I.d += "7";
+                    }
+                    if(mathrandom >= 9.53-(I.en.luck*0.05*luckpot)){
+                        I.d += "6";
+                    }
+                    if(mathrandom >= 9.4-(I.en.luck*0.05*luckpot)){
+                        I.d += "5";
+                    }
+                    if(mathrandom >= 9.07-(I.en.luck*0.05*luckpot)){
+                        I.d += "4";
+                    }
+                    else if(mathrandom >= 8.6-(I.en.luck*0.25*luckpot)){
                         I.d += "3";
                     }
-                    else if(mathrandom >= 6.9-(I.en.luck*0.25)){
+                    else if(mathrandom >= 6.9-(I.en.luck*0.25*luckpot)){
+                        I.d += "2";
+                    }
+                    else if(mathrandom >= -1){
+                        I.d += "1";
+                    }
+              }
+              if(pick == 6){
+                    if(mathrandom >= 9.95-(I.en.luck*0.05*luckpot)){
+                        I.d += "7";
+                    }
+                    if(mathrandom >= 9.65-(I.en.luck*0.05*luckpot)){
+                        I.d += "6";
+                    }
+                    if(mathrandom >= 9.55-(I.en.luck*0.05*luckpot)){
+                        I.d += "5";
+                    }
+                    if(mathrandom >= 9.25-(I.en.luck*0.05*luckpot)){
+                        I.d += "4";
+                    }
+                    else if(mathrandom >= 8.95-(I.en.luck*0.20*luckpot)){
+                        I.d += "3";
+                    }
+                    else if(mathrandom >= 7-(I.en.luck*0.25*luckpot)){
+                        I.d += "2";
+                    }
+                    else if(mathrandom >= -1){
+                        I.d += "1";
+                    }
+              }
+              if(pick == 7 || pick == 8){
+                    if(mathrandom >= 9.94-(I.en.luck*0.05*luckpot)){
+                        I.d += "7";
+                    }
+                    if(mathrandom >= 9.64-(I.en.luck*0.05*luckpot)){
+                        I.d += "6";
+                    }
+                    if(mathrandom >= 9.53-(I.en.luck*0.05*luckpot)){
+                        I.d += "5";
+                    }
+                    if(mathrandom >= 9.22-(I.en.luck*0.05*luckpot)){
+                        I.d += "4";
+                    }
+                    else if(mathrandom >= 8.92-(I.en.luck*0.20*luckpot)){
+                        I.d += "3";
+                    }
+                    else if(mathrandom >= 7-(I.en.luck*0.25*luckpot)){
                         I.d += "2";
                     }
                     else if(mathrandom >= -1){
@@ -535,10 +754,94 @@ var createLand = function(I, dim){
                     }
               }
               if(pick == 9){
-                    if(mathrandom >= 8.5-(I.en.luck*0.25)){
+                    if(mathrandom >= 9.85-(I.en.luck*0.05*luckpot)){
+                        I.d += "7";
+                    }
+                    if(mathrandom >= 9.5-(I.en.luck*0.05*luckpot)){
+                        I.d += "6";
+                    }
+                    if(mathrandom >= 9.35-(I.en.luck*0.05*luckpot)){
+                        I.d += "5";
+                    }
+                    if(mathrandom >= 9.0-(I.en.luck*0.05*luckpot)){
+                        I.d += "4";
+                    }
+                    else if(mathrandom >= 8.4-(I.en.luck*0.25*luckpot)){
                         I.d += "3";
                     }
-                    else if(mathrandom >= 6.8-(I.en.luck*0.25)){
+                    else if(mathrandom >= 6.6-(I.en.luck*0.25*luckpot)){
+                        I.d += "2";
+                    }
+                    else if(mathrandom >= -1){
+                        I.d += "1";
+                    }
+              }
+              
+              if(pick == 10){
+                    if(mathrandom >= 9.9-(I.en.luck*0.05*luckpot)){
+                        I.d += "7";
+                    }
+                    if(mathrandom >= 9.56-(I.en.luck*0.05*luckpot)){
+                        I.d += "6";
+                    }
+                    if(mathrandom >= 9.43-(I.en.luck*0.05*luckpot)){
+                        I.d += "5";
+                    }
+                    if(mathrandom >= 9.1-(I.en.luck*0.05*luckpot)){
+                        I.d += "4";
+                    }
+                    else if(mathrandom >= 8.7-(I.en.luck*0.25*luckpot)){
+                        I.d += "3";
+                    }
+                    else if(mathrandom >= 6.9-(I.en.luck*0.25*luckpot)){
+                        I.d += "2";
+                    }
+                    else if(mathrandom >= -1){
+                        I.d += "1";
+                    }
+              }
+              
+              if(pick == 11){
+                    if(mathrandom >= 9.85-(I.en.luck*0.05*luckpot)){
+                        I.d += "7";
+                    }
+                    if(mathrandom >= 9.5-(I.en.luck*0.05*luckpot)){
+                        I.d += "6";
+                    }
+                    if(mathrandom >= 9.35-(I.en.luck*0.05*luckpot)){
+                        I.d += "5";
+                    }
+                    if(mathrandom >= 9.0-(I.en.luck*0.05*luckpot)){
+                        I.d += "4";
+                    }
+                    else if(mathrandom >= 8.4-(I.en.luck*0.25*luckpot)){
+                        I.d += "3";
+                    }
+                    else if(mathrandom >= 6.6-(I.en.luck*0.25*luckpot)){
+                        I.d += "2";
+                    }
+                    else if(mathrandom >= -1){
+                        I.d += "1";
+                    }
+              }
+              
+              if(pick == 12){
+                    if(mathrandom >= 9.8-(I.en.luck*0.05*luckpot)){
+                        I.d += "7";
+                    }
+                    if(mathrandom >= 9.45-(I.en.luck*0.05*luckpot)){
+                        I.d += "6";
+                    }
+                    if(mathrandom >= 9.3-(I.en.luck*0.05*luckpot)){
+                        I.d += "5";
+                    }
+                    if(mathrandom >= 9.0-(I.en.luck*0.05*luckpot)){
+                        I.d += "4";
+                    }
+                    else if(mathrandom >= 8.4-(I.en.luck*0.25*luckpot)){
+                        I.d += "3";
+                    }
+                    else if(mathrandom >= 6.6-(I.en.luck*0.25*luckpot)){
                         I.d += "2";
                     }
                     else if(mathrandom >= -1){
@@ -817,6 +1120,18 @@ var updateInventory = function(I){
   if(I.ar === undefined){
     I.ar = -1;
   }
+  if(I.inv.blazerod === undefined){
+    I.inv.blazerod = 0;
+  }
+  if(I.pots === undefined){
+    I.pots = [0, 0, 0];
+  }
+  if(I.canbrew === undefined){
+    I.canbrew = 0;
+  }
+  if(I.minerscore === undefined){
+    I.minerscore = 0;
+  }
 };
 var calcFortune = function(f, I){
   var donat = 1;
@@ -879,22 +1194,55 @@ var lapis = "<:lapis:550738153896542212>";
 var diamond = "<:diamond:550738152797765652>";
 var keplerium = "<:keplerium:559465763875061780>";
 var random = "<:random:550738153414328405>";
-var emerald = "<:emerald:560531131796291594>";
-var Stone = "<:Stone:516691401413623873>";
-var Coal = "<:Coal:516691265149206538>";
-var Iron = "<:Iron:516691326771658778>";
-var Gold = "<:Gold:516691308488818708>";
-var Redstone = "<:Redstone:516691397286297603>";
-var Lapis = "<:Lapis:516691349832204291>";
-var Diamond = "<:Diamond:516691229195501581>";
-var Keplerium = "<:Keplerium:561235683746775040>";
+var emerald = "<:Emerald:604018385977606180>";
+var Stone = "<:Stone:604018386292441118>";
+var Coal = "<:Coal:604023271574470666>";
+var Iron = "<:Iron:604018385952571411>";
+var Gold = "<:Gold:604018385910628372>";
+var Redstone = "<:Redstone:604018387915374612>";
+var Lapis = "<:Lapis:604018385927405581>";
+var Diamond = "<:Diamond:604018385818353687>";
+var Keplerium = "<:Keplerium:604027466176004126>";
 var obsidian = "<:Obsidian:562455832046862337>";
 var netherrack = "<:Netherracker:562457334303948833>";
 var soulsand = "<:SoulSand:562455975940980745>";
 var quartz = "<:Quartz:562455976184381440>";
-var Obsidian = "<:Obby:562457507704864769>";
-var Quartz = "<:QuartzDust:562457791332352002>";
-var pickaxes = ["<:wp:550733904051437570>", "<:sp:550733903896379445>", "<:ip:550049621477425176>", "<:dp:550733904009625612>", "<:vp:557200040633040947>", "<:dop:557200041517776896>", "<:gp:559471812602363925>","<:rp:559446015556714536>","<:lp:559446015422496799>","<:kp:559446015665504275>"];
+var Obsidian = "<:Obsidian:603030956122570764>";
+var Quartz = "<:QuartzDust:603030907758313502>";
+var Netherrack = "<:Netherrack:603037621572337664>";
+var SoulSand = "<:SoulSand2:603037621488451584>";
+var nethergo = "<:NeGo:603337584424517662>";
+var netherem = "<:NeEm:603037621542715394>";
+var netherdi = "<:NeDi:603037621060632579>";
+var blazeore = "<:NeBl:603039326644994049>";
+var BlazeRod = "<:BlazeRod:603040353511276544>";
+var potions = [
+  {
+    name: "Haste Potion",
+    info: "You have 25% less cooldown for 5 minutes",
+    pic: "<:HastePotion:604055946595008537>",
+    tag: "haste",
+    cost1: "gold",
+    cost2: 8,
+  },
+  {
+    name: "Luck Potion",
+    info: "You are 25% more likely to find rarer ores for 5 minutes (Do kb!regenland to generate new rare ores)",
+    pic: "<:LuckPotion:604055946548871189>",
+    tag: "luck",
+    cost1: "quartz",
+    cost2: 8,
+  },
+  {
+    name: "Magnet Potion",
+    info: "You will get 25% more xp for 5 minutes",
+    tag: "magnet",
+    pic: "<:MagnetPotion:604055946406133771>",
+    cost1: "lapis",
+    cost2: 8,
+  },
+];
+var pickaxes = ["<:wp:550733904051437570>", "<:sp:550733903896379445>", "<:ip:603030578220236822>", "<:dp:550733904009625612>", "<:vp:557200040633040947>", "<:dop:557200041517776896>", "<:gp:559471812602363925>","<:rp:559446015556714536>","<:lp:559446015422496799>","<:kp:559446015665504275>", "<:qp:603337584474718228>", "<:pp:603337584449683496>", "<:bp:603337584432644096>"];
 var air = "<:air:550335949909786625>";
 var air2 = "<:Air2:562457334266331137>";
 var xps = ["<:xp_0:550744679550025728>", "<:xp_1:550744679327596545>", "<:xp_2:550744679495237643>", "<:xp_3:550744679680049167>", 
@@ -902,8 +1250,107 @@ var xps = ["<:xp_0:550744679550025728>", "<:xp_1:550744679327596545>", "<:xp_2:5
         "<:xp_6:550744679910473753>", "<:xp_7:550744679562608642>", "<:xp_8:550744679835107340>"];
 var xp = "<:xp:550773197398736928>";
 var crates = ["<:crate1:557290667135467520>", "<:crate2:557290668003688449>", "<:crate3:557290667986911250>", "<:crate4:557290669647855618>", "<:crate0:557290666883809311>"];
+var crecipes = [
+  {
+    name: "Stone Pickaxe",
+    info: "A Regular stone pickaxe, can mine iron",
+    pic: pickaxes[1],
+    tag: "stone",
+    cost1: Stone,
+    cost2: 60,
+  },
+  {
+    name: "Iron Pickaxe",
+    info: "An iron pickaxe, can mine diamonds and gold",
+    pic: pickaxes[2],
+    tag: "iron",
+    cost1: Iron,
+    cost2: 60,
+  },
+  {
+    name: "Diamond Pickaxe",
+    info: "A Diamond Pickaxe, can mine lots of things!",
+    pic: pickaxes[3],
+    tag: "diamond",
+    cost1: Diamond,
+    cost2: 60,
+  },
+  {
+    name: "Gold Pickaxe",
+    info: "A Gold pickaxe can mine redstone and lapis!",
+    pic: pickaxes[6],
+    tag: "gold",
+    cost1: Gold,
+    cost2: 60,
+  },
+  {
+    name: "Redstone Pickaxe",
+    info: "Just a Redstone Pickaxe",
+    pic: pickaxes[7],
+    tag: "redstone",
+    cost1: Redstone,
+    cost2: 60,
+  },
+  {
+    name: "Lapis Pickaxe",
+    info: "A Lapis Pickaxe.",
+    pic: pickaxes[8],
+    tag: "lapis",
+    cost1: Lapis,
+    cost2: 60,
+  },
+  {
+    name: "Keplerium Pickaxe",
+    info: "The strongest overworld pickaxe",
+    pic: pickaxes[9],
+    tag: "keplerium",
+    cost1: Keplerium,
+    cost2: 16,
+  },
+  {//sure
+    name: "Quartz Pickaxe",
+    info: "Around the same of a Voter Pickaxe but for the Nether",
+    pic: pickaxes[10],
+    tag: "quartz",
+    cost1: Quartz,
+    cost2: 60,
+  },
+  {
+    name: "Pigman Pickaxe",
+    info: "Has 50% less cooldown when mining in the nether",
+    pic: pickaxes[11],
+    tag: "pigman",
+    cost1: Gold,
+    cost2: 360,
+  },
+  {
+    name: "Blaze Pickaxe",
+    info: "You get 50% more xp when mining in the nether",
+    pic: pickaxes[1],
+    tag: "blaze",
+    cost1: BlazeRod,
+    cost2: 120,
+  },
+  {
+    name: "Nether Portal",
+    info: "Go to the nether! Requires level 10",
+    pic: Obsidian,
+    tag: "nether",
+    cost1: Obsidian,
+    cost2: 14,
+  },
+  {
+    name: "Brewing Stand",
+    info: "Brew potions to improve your mining experience",
+    pic: '<:BrewingStand:604055946926358572>',
+    tag: "brewingstand",
+    cost1: BlazeRod,
+    cost2: 12,
+  },
+];
 var emvalue = inv.emvalue || 1;
 var investamt = 0;
+var nextminerreset = inv.minerreset;
 //Functions
 var count = 0;
 var TutorialCommand = function(message){
@@ -934,6 +1381,16 @@ var MineCommand = function(message, args){
   if(I.en.cooldown === 1)waittime = 4*1000;
   if(I.en.cooldown === 2)waittime = 3*1000;
   if(I.en.cooldown === 3)waittime = 2*1000;
+  if(I.pick === 11){ waittime /=2;} //pigman power!!!
+  if((I.pick < 3 || (I.pick >= 6 && I.pick <= 8)) && I.dim === 1){
+    waittime +=500;
+  }
+  if((I.pick > 9) && I.dim === 0){
+    waittime +=500;
+  }
+  if(I.pots[0] > Date.now()){
+    waittime *=0.75;
+  }
     if(I.d == ""){createLand(I);}
     if(Date.now() > I.lastmine+waittime){
       I.lastmine = Date.now();
@@ -981,15 +1438,16 @@ var MineCommand = function(message, args){
                           message.reply("You got 5 diamonds!");
                       }
                     }
-                    if(I.d[i*7+j] == "a"){ I.inv.obsidian +=1; I.xp+=5*timesXpBoost(I.en.xp, I);}
-                    if(I.d[i*7+j] == "9"){ I.inv.keplerium +=1; I.xp+=50*timesXpBoost(I.en.xp, I);}
-                    if(I.d[i*7+j] == "8"){ I.inv.lapis +=1*calcFortune(I.en.fortune, I); I.xp+=3*timesXpBoost(I.en.xp, I);}
-                    if(I.d[i*7+j] == "7"){ I.inv.redstone +=1*calcFortune(I.en.fortune, I); I.xp+=3*timesXpBoost(I.en.xp, I);}
-                    if(I.d[i*7+j] == "5"){ I.inv.diamond +=1*calcFortune(I.en.fortune, I); I.xp+=10*timesXpBoost(I.en.xp, I);}
-                    if(I.d[i*7+j] == "4"){ I.inv.gold +=1*calcFortune(I.en.fortune, I); I.xp+=5*timesXpBoost(I.en.xp, I);}
-                    if(I.d[i*7+j] == "3"){ I.inv.iron +=1*calcFortune(I.en.fortune, I);I.xp+=3*timesXpBoost(I.en.xp, I);}
-                    if(I.d[i*7+j] == "2"){ I.inv.coal +=1*calcFortune(I.en.fortune, I);I.xp+=1*timesXpBoost(I.en.xp, I);}
-                    if(I.d[i*7+j] == "1"){ I.inv.stone +=1*calcFortune(I.en.fortune, I);}  
+                  var magnetpot = (I.pots[2] > Date.now()) ? 1.25 : 1;
+                    if(I.d[i*7+j] == "a"){ I.inv.obsidian +=1; I.xp+=5*magnetpot*timesXpBoost(I.en.xp, I);I.minerscore+=5;}
+                    if(I.d[i*7+j] == "9"){ I.inv.keplerium +=1; I.xp+=50*magnetpot*timesXpBoost(I.en.xp, I);I.minerscore+=50;}
+                    if(I.d[i*7+j] == "8"){ I.inv.lapis +=1*calcFortune(I.en.fortune, I); I.xp+=3*magnetpot*timesXpBoost(I.en.xp, I);I.minerscore+=3;}
+                    if(I.d[i*7+j] == "7"){ I.inv.redstone +=1*calcFortune(I.en.fortune, I); I.xp+=3*magnetpot*timesXpBoost(I.en.xp, I);I.minerscore+=3;}
+                    if(I.d[i*7+j] == "5"){ I.inv.diamond +=1*calcFortune(I.en.fortune, I); I.xp+=10*magnetpot*timesXpBoost(I.en.xp, I);I.minerscore+=10;}
+                    if(I.d[i*7+j] == "4"){ I.inv.gold +=1*calcFortune(I.en.fortune, I); I.xp+=5*magnetpot*timesXpBoost(I.en.xp, I);I.minerscore+=5;}
+                    if(I.d[i*7+j] == "3"){ I.inv.iron +=1*calcFortune(I.en.fortune, I);I.xp+=3*magnetpot*timesXpBoost(I.en.xp, I);I.minerscore+=3;}
+                    if(I.d[i*7+j] == "2"){ I.inv.coal +=1*calcFortune(I.en.fortune, I);I.xp+=1*magnetpot*timesXpBoost(I.en.xp, I);I.minerscore+=2;}
+                    if(I.d[i*7+j] == "1"){ I.inv.stone +=1*calcFortune(I.en.fortune, I);I.minerscore+=1;}  
                     I.d = replaceInString(I.d, i*7+j, "0");
                   }
                 else if(I.d[i*7+j] === "a"){
@@ -1029,12 +1487,29 @@ var MineCommand = function(message, args){
               else if(I.dim === 1){//Nether dimension
                 if(i === I.picky && j === I.pickx){
                   m +=pickaxes[I.pick];
-                  
-                    if(I.d[i*7+j] == "3"){ I.inv.quartz +=1*calcFortune(I.en.fortune, I);I.xp+=16*timesXpBoost(I.en.xp, I);}
-                    if(I.d[i*7+j] == "2"){ I.inv.soulsand +=1*calcFortune(I.en.fortune, I);I.xp+=2*timesXpBoost(I.en.xp, I);}
-                    if(I.d[i*7+j] == "1"){ I.inv.netherrack +=1*calcFortune(I.en.fortune, I);}  
+                  var magnetpot = (I.pots[2] > Date.now()) ? 1.25 : 1;
+                   var blazexpboost = (I.pick == 12) ? 2 : 1;
+                    if(I.d[i*7+j] == "7"){ I.inv.blazerod +=1*calcFortune(I.en.fortune, I);I.xp+=64*magnetpot*blazexpboost*timesXpBoost(I.en.xp, I);I.minerscore+=64;}
+                    if(I.d[i*7+j] == "6"){ I.inv.emerald +=1*calcFortune(I.en.fortune, I);I.xp+=25*magnetpot*blazexpboost*timesXpBoost(I.en.xp, I);I.minerscore+=25;}
+                    if(I.d[i*7+j] == "5"){ I.inv.diamond +=1*calcFortune(I.en.fortune, I);I.xp+=20*magnetpot*blazexpboost*timesXpBoost(I.en.xp, I);I.minerscore+=20;}
+                    if(I.d[i*7+j] == "4"){ I.inv.gold +=1*calcFortune(I.en.fortune, I);I.xp+=10*magnetpot*blazexpboost*timesXpBoost(I.en.xp, I);I.minerscore+=10;}
+                    if(I.d[i*7+j] == "3"){ I.inv.quartz +=1*calcFortune(I.en.fortune, I);I.xp+=16*magnetpot*blazexpboost*timesXpBoost(I.en.xp, I);I.minerscore+=16;}
+                    if(I.d[i*7+j] == "2"){ I.inv.soulsand +=1*calcFortune(I.en.fortune, I);I.xp+=2*magnetpot*blazexpboost*timesXpBoost(I.en.xp, I);I.minerscore+=4;}
+                    if(I.d[i*7+j] == "1"){ I.inv.netherrack +=1*calcFortune(I.en.fortune, I);I.minerscore+=2;}  
                     I.d = replaceInString(I.d, i*7+j, "0"); //got it.
-                }//We have to test the nether first. I'm saving the end for perhaps 1.7
+                }//We have to test the nether first. I'm saving the end for perhaps 1.9
+                else if(I.d[i*7+j] === "7"){
+                    m += blazeore;
+                }
+                else if(I.d[i*7+j] === "6"){
+                    m += netherem;
+                }
+                else if(I.d[i*7+j] === "5"){
+                    m += netherdi;
+                }
+                else if(I.d[i*7+j] === "4"){
+                    m += nethergo;
+                }
                 else if(I.d[i*7+j] === "3"){
                     m += quartz;
                 }
@@ -1057,6 +1532,7 @@ var MineCommand = function(message, args){
         .setDescription(m)
         .setColor("33ee33");*/
       message.channel.send("**Your Arena:**" + m);
+      I.xp = Math.floor(I.xp);
       if(I.tut === 4 && I.inv.stone >= 60){
         I.tut = 5;
         Message("It's time!", "You finally have enough stone! It takes 60 to craft a new shiny pickaxe!\nUse the `kb!craft stone` to craft your new shiny stone pickaxe!", message, "33ee33");
@@ -1093,6 +1569,15 @@ var MineCommand = function(message, args){
       ];
       if(Math.random()*10 > 7.8){
           message.channel.send("**TIP: **\n" + tips[Math.floor(Math.random()*tips.length)]);
+      }
+      var potsss = "**Active Potion Effects:**";
+      for(var i = 0;i < I.pots.length;i ++){
+        if(I.pots[i] > Date.now()){
+          potsss +="\n" + potions[i].name + " for " + Math.floor((I.pots[i]-Date.now())/60000) + " more minutes";
+        }
+      }
+      if(potsss !== "**Active Potion Effects:**"){
+        message.channel.send(potsss);
       }
       addPickaxeRoles(message, I);
     }
@@ -1161,8 +1646,17 @@ var InvCommand = function(message, args){
             }
         }
         let testVar = "breep";
-        var overworldStuff = `they have mined:\n ${Stone} ${I.inv.stone}\n ${Coal} ${I.inv.coal}\n ${Iron} ${I.inv.iron}\n ${Gold} ${I.inv.gold}\n ${Diamond} ${I.inv.diamond}\n ${Redstone} ${I.inv.redstone}\n ${Lapis} ${I.inv.lapis}\n ${Keplerium} ${I.inv.keplerium}\n ${emerald} ${I.inv.emerald}`;
-        var netherworldStuff = `they have mined:\n ${netherrack} ${I.inv.netherrack}\n ${soulsand} ${I.inv.soulsand}\n ${Quartz} ${I.inv.quartz}\n ${Obsidian} ${I.inv.obsidian}`;
+        //var overworldStuff = `they have mined:\n ${I.inv.stone}\n ${Coal} ${I.inv.coal}\n ${Iron} ${I.inv.iron}\n ${Gold} ${I.inv.gold}\n ${Diamond} ${I.inv.diamond}\n ${Redstone} ${I.inv.redstone}\n ${Lapis} ${I.inv.lapis}\n ${Keplerium} ${I.inv.keplerium}\n ${emerald} ${I.inv.emerald}`;
+        var overworldStuff = Stone + " **" + Math.floor(I.inv.stone) + "**\n";
+        overworldStuff += Coal + " **" + I.inv.coal + "**\n";
+        overworldStuff += Iron + " **" + I.inv.iron + "**\n";
+        overworldStuff += Gold + " **" + I.inv.gold + "**\n";
+        overworldStuff += Diamond + " **" + I.inv.diamond + "**\n";
+        overworldStuff += Redstone + " **" + I.inv.redstone + "**\n";
+        overworldStuff += Lapis + " **" + I.inv.lapis + "**\n";
+        overworldStuff += Keplerium + " **" + I.inv.keplerium + "**\n";
+        overworldStuff += emerald + " **" + I.inv.emerald + "**\n";
+        var netherworldStuff = `${Netherrack} **${I.inv.netherrack}**\n ${SoulSand} **${I.inv.soulsand}**\n ${Quartz} **${I.inv.quartz}**\n ${Obsidian} **${I.inv.obsidian}**\n ${BlazeRod} **${I.inv.blazerod}**`;
         //message.reply();
         var pickss = "";
         for(var i = 0;i < I.picks.length;i ++){
@@ -1217,7 +1711,7 @@ var RegenLandCommand = function(message, args){
 };
 var filename = "./datas.json";
 var BackupQuick = function(){
-    var inv = {Arenas:Arenas,Invs:Invs,emvalue:emvalue};
+    var inv = {Arenas:Arenas,Invs:Invs,emvalue:emvalue,minerreset:nextminerreset};
     var data = JSON.stringify(inv);
     fs.writeFile('datas.json', data, (err) => {  
       if (err) throw err;
@@ -1228,10 +1722,11 @@ var BackupQuick = function(){
       Invs = inv.Invs;
       emvalue = inv.emvalue;
       Arenas = inv.Arenas;
+      nextminerreset = inv.minerreset;
     });
 };
 var BackupCommand = function(message, args){
-    var inv = {Arenas:Arenas,Invs:Invs,emvalue:emvalue};
+    var inv = {Arenas:Arenas,Invs:Invs,emvalue:emvalue,minerreset:nextminerreset};
     var data = JSON.stringify(inv);
     var Namee = "data" + Date.now() + ".json";
     Namee = Namee.toString();
@@ -1246,6 +1741,7 @@ var BackupCommand = function(message, args){
       Invs = inv.Invs;
       emvalue = inv.emvalue;
       Arenas = inv.Arenas;
+      nextminerreset = inv.minerreset;
       var myAttachment = new Commando.Attachment("./datas.json", Namee);
       let embed = new Commando.RichEmbed()
             .setAuthor(bot.user.username, bot.user.avatarURL)
@@ -1271,8 +1767,30 @@ var CraftCommand = function(message, args){
   
     updateInventory(I);
     I.name = message.author.username.toString();
+  
+  if(args[0] === undefined || args[0] === "" || args[0] === "page"){
+    var PG = (-1+Math.floor(args[1]))*5 || 0;
+    if(PG < 0) PG = 0;
+    if(PG*5 > crecipes.length){ PG = 0;}
+    var EPG = PG+5;
+    if(EPG >= crecipes.length) EPG = crecipes.length;
+        var craftingrecipes = "";
+        
+        for(var i = PG;i < EPG;i ++){
+          craftingrecipes +=crecipes[i].cost1 + " **" + crecipes[i].cost2 + "** :arrow_forward: " + crecipes[i].pic + " " + crecipes[i].name + " - " + crecipes[i].info + " - Do `kb!craft " + crecipes[i].tag + "`";
+          craftingrecipes +="\n";
+        }
+        let craftEmbed = new Commando.RichEmbed() 
+            .setTitle(`**${I.name}'s inventory**`)
+            .setColor("22ff88")
+            .setTimestamp()
+            .setFooter(`Requested by ${message.author.username}`, message.author.displayAvatarURL)
+            .addField(`Crafting!!`, "You can do `kb!craft <item> to craft that item You may require different materials!", false)
+            .addField(`Recipes (Do kb!craft page <pg> to switch pages!):`, craftingrecipes, true);
+        message.channel.send(craftEmbed);
+    return;
+  }
     //stone
-    if(I.dim === 0){
       if(I.inv.stone >= 60 && (args[0] === 1 || args[0] === "stone") && I.picks[1] === false){
           I.pick = 1;
           I.inv.stone -=60;
@@ -1369,16 +1887,66 @@ var CraftCommand = function(message, args){
       else if(args[0] === 9 || args[0] === "keplerium"){
         Message("Crafting Table", "You own this pickaxe!", message);
       }
-    }
+      //quartzpickaxe
+      if(I.inv.quartz >= 60 && (args[0] === 10 || args[0] === "quartz") && I.picks[10] === false){
+          I.pick = 10;
+          I.picks[10] = true;
+          I.inv.quartz -=60;
+          Message("Crafting Table", "You have crafted the Quartz Pickaxe!" + pickaxes[I.pick], message);
+      }
+      else if((args[0] === 10 || args[0] === "quartz") && I.picks[10] === false){
+          Message("Crafting Table", "You need " + (60-I.inv.quartz) + " more " + Quartz, message);
+      }
+      else if(args[0] === 10 || args[0] === "quartz"){
+        Message("Crafting Table", "You own this pickaxe!", message);
+      }
+      //pigmenpickaxe
+      if(I.inv.gold >= 360 && (args[0] === 11 || args[0] === "pigman") && I.picks[11] === false){
+          I.pick = 11;
+          I.picks[11] = true;
+          I.inv.gold -=360;
+          Message("Crafting Table", "You have crafted the Pigman Pickaxe!" + pickaxes[I.pick], message);
+      }
+      else if((args[0] === 11 || args[0] === "pigman") && I.picks[11] === false){
+          Message("Crafting Table", "You need " + (360-I.inv.gold) + " more " + Gold, message);
+      }
+      else if(args[0] === 11 || args[0] === "pigman"){
+        Message("Crafting Table", "You own this pickaxe!", message);
+      }
+      //blazepickaxe
+      if(I.inv.blazerod >= 120 && (args[0] === 12 || args[0] === "blaze") && I.picks[12] === false){
+          I.pick = 12;
+          I.picks[12] = true;
+          I.inv.blazerod -=120;
+          Message("Crafting Table", "You have crafted the Blaze Pickaxe!" + pickaxes[I.pick], message);
+      }
+      else if((args[0] === 12 || args[0] === "blaze") && I.picks[12] === false){
+          Message("Crafting Table", "You need " + (120-I.inv.blazerod) + " more " + BlazeRod, message);
+      }
+      else if(args[0] === 12 || args[0] === "blaze"){
+        Message("Crafting Table", "You own this pickaxe!", message);
+      }
+  
+  //brewing stand
+  
+      if(I.inv.blazerod >= 12 && I.canbrew === 0 && args[0] === "brewingstand"){
+        I.canbrew = 1;
+        I.inv.blazerod -=12;
+        Message("Crafting Table", "You've unlocked the brewing stand! Use `kb!brew` to start!", message);
+      }
+      else if(I.inv.blazerod < 12 && I.canbrew === 0 && args[0] === "brewingstand"){
+          Message("Crafting Table", "You need " + (12-I.inv.blazerod) + " more " + BlazeRod, message);
+      }
+      else if(I.canbrew === 1 && args[0] === "brewingstand"){
+        Message("Crafting Table", "You can already brew!", message);
+      }
+    
   //nether portal
   
       if(I.inv.obsidian >= 14 && (args[0] === "netherportal" || args[0] === "nether") && (I.picks[3] === true || I.picks[4] === true || I.picks[5] === true || I.picks[9] === true) && I.level >= 10 && I.dims[1] === false){
           I.inv.obsidian -=14;
           I.dims[1] = true;
           Message("Crafting Table", "You just created a Nether Portal! " + pickaxes[I.pick], message);
-      }
-      else if((args[0] === "netherportal" || args[0] === "nether") && !(I.picks[3] === true || I.picks[4] === true || I.picks[5] === true || I.picks[9] === true)){
-          Message("Crafting Table", "You don't own an allowed pickaxe!", message);
       }
       else if((args[0] === "netherportal" || args[0] === "nether") && I.level < 10){
         Message("Crafting Table", "You must be at least level 10", message);
@@ -1389,9 +1957,6 @@ var CraftCommand = function(message, args){
       else if((args[0] === "netherportal" || args[0] === "nether")){
         Message("Crafting Table", "You own this dimension!", message);
       }
-    if(args[0] === ""){
-        Message("Crafting Table", "Please add in what pickaxe you want to craft! iron, stone, diamond, etc.", message); 
-    }
     addPickaxeRoles(message, I);
 };
 
@@ -1746,11 +2311,11 @@ var ArenaCommand = function(message, args){
   }
   if(args[0] === "list"){
     var PG = 0;
-    if(args[1] !== undefined && args[1] !== "" && !isNaN(Math.floor(parseInt(args[1]))) && Math.floor(args[1]) >= 0 && Math.floor(args[1]) <= Math.floor(Arenas.length/10)){
+    if(args[1] !== undefined && args[1] !== "" && !isNaN(Math.floor(parseInt(args[1]))) && Math.floor(args[1]) >= 0 && Math.floor(args[1]) <= Math.floor(Arenas.length/5)){
       PG = Math.floor(args[1]);
     }
-    var stpg = PG*10;
-    var edpg = PG*10 + 10;
+    var stpg = PG*5;
+    var edpg = PG*5 + 5;
     if(edpg >= Arenas.length){
       edpg = Arenas.length;
     }
@@ -1776,6 +2341,11 @@ var ArenaCommand = function(message, args){
   }
   //console.log(Arenas);
 };
+var resetArenas = function(message){
+  Arenas = [];
+  console.log(Arenas);
+  Message("Reset Arenas!", "All Arenas Reset :/", message);
+};
 //More Commands yeet
 var TopListCommand = function(message, args){
     
@@ -1799,23 +2369,37 @@ var TopListCommand = function(message, args){
     for(var i = 0;i < Invs.length;i ++){
         TopInvs.push(Invs[i]);
     }
-    if(args[0] === "levels" || args[0] !== "emeralds"){ TopInvs.sort(function(a,b){return b.level-a.level;});}
+    if(args[0] === "levels" && args[0] !== "emeralds" && args[0] !== "minerscore"){ TopInvs.sort(function(a,b){return b.level-a.level;});}
     if(args[0] === "emeralds"){ TopInvs.sort(function(a,b){return b.inv.emerald-a.inv.emerald;});}
+    if(args[0] === "minerscore"){ TopInvs.sort(function(a,b){return b.minerscore-a.minerscore;});console.log(args[0])}
     var ms = "";
     var MAX = thepage+10;
     if(MAX > TopInvs.length){
       MAX = TopInvs.length;
     }
     for(var i = thepage;i < MAX;i ++){
+      if(TopInvs[i].minerscore === undefined){ TopInvs[i].minerscore = 0;}
         ms +=(i+1) + ". " + pickaxes[TopInvs[i].pick];
         ms +=TopInvs[i].name;
         //ms +=tokenToUser(TopInvs[i].id);
         //console.log(tokenToUser(TopInvs[i].id));
         if(args[0] === "emeralds"){ ms +=" - " + emerald + " " + TopInvs[i].inv.emerald + "\n";}
-        else if(args[0] === "levels" || args[0] !== "emeralds"){ms +=" - Level " + TopInvs[i].level + "\n";}
+        else if(args[0] === "minerscore"){ms +=" - " + TopInvs[i].minerscore + "\n";}
+        else{ms +=" - Level " + TopInvs[i].level + "\n";}
     }
-    if(1+findYourPlace(message.author.id) > 10){ ms +="...\n" + (1+findYourPlace(message.author.id)) + ". " + TopInvs[findYourPlace(message.author.id)].name + " - Level " + TopInvs[findYourPlace(message.author.id)].level;}
-    Message("Top 10 Leaderboard! Do kb!lb <levels:emeralds> <page> to change pages", ms, message, "eeee33");
+    if(1+findYourPlace(message.author.id) > 10){ 
+      if(args[0] === "minerscore"){
+        ms +="...\n" + (1+findYourPlace(message.author.id)) + ". " + TopInvs[findYourPlace(message.author.id)].name + " - " + TopInvs[findYourPlace(message.author.id)].minerscore;
+      }
+      else if(args[0] === "emeralds"){
+        ms +="...\n" + (1+findYourPlace(message.author.id)) + ". " + TopInvs[findYourPlace(message.author.id)].name + " - " + emerald + " " + TopInvs[findYourPlace(message.author.id)].emerald;
+      }
+      else{
+        ms +="...\n" + (1+findYourPlace(message.author.id)) + ". " + TopInvs[findYourPlace(message.author.id)].name + " - Level " + TopInvs[findYourPlace(message.author.id)].level;
+      }
+      
+    }
+    Message("Top 10 Leaderboard! Do kb!lb <levels:emeralds:minerscore> <page> to change pages", ms, message, "eeee33");
     addPickaxeRoles(message, I);
 };
 var PickaxeCommand = function(message, args){
@@ -1830,21 +2414,20 @@ var PickaxeCommand = function(message, args){
     I.name = message.author.username.toString();
     var pickk = args[0];
     pickk = pickk.toLowerCase();
-    if((pickk === "wood" || pickk === "planks" || pickk === "wooden") && I.dim === 0){pickk = 0;}
-    if((pickk === "stone" || pickk === "cobble" || pickk === "cobblestone") && I.dim === 0){pickk = 1;}
-    if(pickk === "iron" && I.dim === 0){pickk = 2;}
+    if((pickk === "wood" || pickk === "planks" || pickk === "wooden")){pickk = 0;}
+    if((pickk === "stone" || pickk === "cobble" || pickk === "cobblestone")){pickk = 1;}
+    if(pickk === "iron"){pickk = 2;}
     if(pickk === "diamond"){pickk = 3;}
     if((pickk === "vote" || pickk === "voter" || pickk === "voting")){pickk = 4;}
     if((pickk === "donate" || pickk === "donator" || pickk === "donated")){pickk = 5;}
-    if(pickk === "gold" && I.dim === 0){pickk = 6;}
-    if(pickk === "redstone" && I.dim === 0){pickk = 7;}
-    if(pickk === "lapis" && I.dim === 0){pickk = 8;}
+    if(pickk === "gold"){pickk = 6;}
+    if(pickk === "redstone"){pickk = 7;}
+    if(pickk === "lapis"){pickk = 8;}
     if(pickk === "keplerium"){pickk = 9;}
+    if(pickk === "quartz"){pickk = 10;}
+    if(pickk === "pigman"){pickk = 11;}
+    if(pickk === "blaze"){pickk = 12;}
     pickk = Math.floor(pickk);
-    if(pickk !== 3 && pickk !== 4 && pickk !== 5 && pickk !== 9 && I.dim === 1){
-        Message("Uh oh!", "You can't use that pickaxe here!", message, "ee3333");
-        return;
-    }
     if(pickk < 0 || pickk > I.picks.length-1){
       Message("Uh oh!", "That pickaxe doesn't exist!", message, "ee3333");
       return;
@@ -2084,8 +2667,24 @@ var AddItemsCommand = function(message, args){
           Message("Give Command", SI.name + "Got a " + cratenames[Math.floor(args[2])] + " crate!", message);
         }
         if(args[1] === "obsidian"){
-          SI.obsidian +=Math.floor(args[2]);
+          SI.inv.obsidian +=Math.floor(args[2]);
           Message("Give Command", "Gave " + SI.name + " " + args[2] + " Obsidian!", message);
+        }
+        if(args[1] === "netherrack"){
+          SI.inv.netherrack +=Math.floor(args[2]);
+          Message("Give Command", "Gave " + SI.name + " " + args[2] + " Netherrack!", message);
+        }
+        if(args[1] === "soulsand"){
+          SI.inv.soulsand +=Math.floor(args[2]);
+          Message("Give Command", "Gave " + SI.name + " " + args[2] + " SoulSand!", message);
+        }
+        if(args[1] === "quartz"){
+          SI.inv.quartz +=Math.floor(args[2]);
+          Message("Give Command", "Gave " + SI.name + " " + args[2] + " Quartz!", message);
+        }
+        if(args[1] === "blazerod"){
+          SI.inv.blazerod +=Math.floor(args[2]);
+          Message("Give Command", "Gave " + SI.name + " " + args[2] + " Blaze Rod/s!", message);
         }
         if(args[1] === "enchant"){
           if(args[2] === "cooldown"){
@@ -2837,6 +3436,40 @@ var InvestCommand = function(message, args){
       Message("Uh oh!", "That is not an investible material at this time!", message, "ee3333");
   }
 };
+
+//pfiscmd
+let prefixes = require('./prefixes.json');
+var setPrefix = async function(message, args) {
+  if(!message.member.hasPermission("ADMINISTRATOR")) return message.channel.send("You do not have the proper permissions!");
+  let ruhrohembed = new Commando.RichEmbed()
+    .setTitle("Uh Oh!")
+    .setColor("FF0000")
+    .setDescription("Usage: `kb!setprefix <newprefix>``");
+    if(!args[0] || args[0] == "help") return message.channel.send(ruhrohembed);
+
+    prefixes[message.guild.id] = {
+        prefix: args[0]
+    }
+
+    await fs.writeFile("./prefixes.json", JSON.stringify(prefixes, null, 4), (err) => {
+        if(err) console.log(err);
+    });
+  
+    let sEmbed = new Commando.RichEmbed()
+        .setColor(`RANDOM`)
+        .setTitle("Prefix Change")
+        .setDescription(`Your prefix was set to \`${args[0]}\``);
+
+    await message.channel.send(sEmbed);
+}
+var Prefix = async function(message, args) {
+  let emb = new Commando.RichEmbed()
+    .setTitle(message.guild.name)
+    .setColor(`RANDOM`)
+    .setDescription(`Your prefix is \`${prefixes[message.guild.id].prefix}\``)
+    .setFooter(`You can change this by runnng \`${prefixes[message.guild.id].prefix}setprefix <newprefix>\``);
+  await message.channel.send(emb);
+}
 //em value
 var EmValueCommand = function(message, args){
   var yourarray = findYourId(message.author.id);
@@ -2863,6 +3496,86 @@ var EmValueCommand = function(message, args){
     }
   }
   Message("Emerald Value", `An Emerald is **${Math.floor(emvalue*100)}%** of its regular value\nRegular Values:\n${M}`, message, "33ee33");
+};
+var BrewCommand = function(message, args){
+  var yourarray = findYourId(message.author.id);
+  if(yourarray == -1){
+      makeNewInventory(message);
+      yourarray = Invs.length-1;
+      console.log("User " + Invs[Invs.length-1].id + " Created!");
+  }
+  var I = Invs[yourarray];
+  updateInventory(I);
+  if(I.canbrew === 0){
+    Message("Uh oh!", "You don't have a brewing stand yet! Do kb!craft brewingstand", message, "ee3333");
+    return;
+  }
+  if(args[0] === undefined || args[0] == ""){ 
+        var brewrecipes = "";
+        for(var i = 0;i < potions.length;i ++){
+          if(potions[i].cost1 === "gold"){
+            brewrecipes +=Gold;
+          }
+          if(potions[i].cost1 === "lapis"){
+            brewrecipes +=Lapis;
+          }
+          if(potions[i].cost1 === "quartz"){
+            brewrecipes +=Quartz;
+          }
+          brewrecipes +=" **" + potions[i].cost2 + "** :arrow_forward: " + potions[i].pic + " " + potions[i].name + " - " + potions[i].info + " - Do `kb!brew " + potions[i].tag + "`";
+          brewrecipes +="\n";
+        }
+        let brewEmbed = new Commando.RichEmbed() 
+            .setTitle(`**${I.name}'s inventory**`)
+            .setColor("22ff88")
+            .setTimestamp()
+            .setFooter(`Requested by ${message.author.username}`, message.author.displayAvatarURL)
+            .addField(`Welcome to Brewing!`, "You can do `kb!brew <potion-name>` to brew a potion! You may require different materials!", false)
+            .addField(`Recipes:`, brewrecipes, true);
+        message.channel.send(brewEmbed);
+  }
+  for(var i = 0;i < potions.length;i ++){
+    if(args[0] == potions[i].tag){
+      var potionsuccessful = false;
+      if(potions[i].cost1 === "gold"){
+        if(I.inv.gold >= potions[i].cost2){
+          I.inv.gold -=potions[i].cost2;
+          potionsuccessful = true;
+        }
+        else{
+          Message("Uh oh!", "You need " + (potions[i].cost2-I.inv.gold) + " more " + Gold, message, "ee3333");
+        }
+      }
+      if(potions[i].cost1 === "lapis"){
+        if(I.inv.lapis >= potions[i].cost2){
+          I.inv.lapis -=potions[i].cost2;
+          potionsuccessful = true;
+        }
+        else{
+          Message("Uh oh!", "You need " + (potions[i].cost2-I.inv.lapis) + " more " + Lapis, message, "ee3333");
+        }
+      }
+      if(potions[i].cost1 === "quartz"){
+        if(I.inv.quartz >= potions[i].cost2){
+          I.inv.quartz -=potions[i].cost2;
+          potionsuccessful = true;
+        }
+        else{
+          Message("Uh oh!", "You need " + (potions[i].cost2-I.inv.quartz) + " more " + Quartz, message, "ee3333");
+        }
+      }
+      if(potionsuccessful){
+        if(I.pots[i] < Date.now()){
+            I.pots[i] = Date.now()+360000;
+            Message("Potion Created!", "You've created your " + potions[i].name + " Potion! It will last for 5 minutes!", message);
+          }
+          else{
+            I.pots[i] +=360000;
+            Message("Potion Extended", "You've extended your " + potions[i].name + " Potion by another 5 minutes!", message);
+          }
+      }
+    }
+  }
 };
 /** MESSAGE FUNCTION */
 dbl.webhook.on('ready', hook => {
@@ -2905,14 +3618,21 @@ var bottype = 2;
 bot.on('error', error => { console.log(error);});
 bot.on('message', message => {
   //console.log(message.author);
-  
+  if(message.channel.type === 'dm'){ return;}
+  if(!prefixes[message.guild.id]){ 
+    prefixes[message.guild.id] = { 
+      prefix: "kb!" 
+    } //Line 3501
+  }
+  //if(message.guild.id !== "") return;
+  //console.log(prefixes[message.guild.id].prefix);
   if(message.author.id !== bot.user.id && message.author.bot) return;
     var checkPrefixMessage = message.toString();
     checkPrefixMessage = checkPrefixMessage.toLowerCase();
     //var Member = message.guild.members.get(message.author.id);
-    if(checkPrefixMessage.startsWith('kb!') || message.channel.type === 'dm') { //Checks if the user is in a DM or is using the kb! thingy
+    if(checkPrefixMessage.startsWith(prefixes[message.guild.id].prefix) || message.channel.type === 'dm') { //Checks if the user is in a DM or is using the kb! thingy
         if(maintenance === false || (maintenance === true)){
-            if(maintenance){
+            if(maintenance && message.guild.id !== "576154168021090315"){
               if(message.channel.type === 'dm'){
                 return;
               }
@@ -2921,8 +3641,8 @@ bot.on('message', message => {
               }
             }
             var fullCmd;
-            if (checkPrefixMessage.startsWith('kb!')) {
-                var fullCmd = message.content.slice(3); //takes out kb! for checking the command
+            if (checkPrefixMessage.startsWith(prefixes[message.guild.id].prefix)) { //<--------------
+                var fullCmd = message.content.slice((prefixes[message.guild.id].prefix).length); //takes out kb! for checking the command
             } else {
                 fullCmd = message.content; //message stays as it is
             }
@@ -2936,6 +3656,33 @@ bot.on('message', message => {
             //console.log(args[0]);
             if(nameCmd === "about" || nameCmd === "ab"){
                 AboutCommand(message);
+              
+                var today = new Date();
+                var lastDayOfMonth = new Date(today.getFullYear(), today.getMonth()+1, 0).getTime();
+              if(Date.now() > nextminerreset) { 
+                nextminerreset = lastDayOfMonth;
+                var Tops = [];
+                for(var i = 0;i < Invs.length;i ++){
+                  Tops.push({
+                    name: Invs[i].name,
+                    minerscore: Invs[i].minerscore || 0,
+                    id: Invs[i].id,
+                  });
+                }
+                Tops.sort(function(a, b){return b.minerscore - a.minerscore});
+                var topminers = "";
+                for(var i = 0;i < 10;i ++){
+                  topminers +="**" + Tops[i].minerscore + "** - " + Tops[i].name + " with id " + Tops[i].id + "\n";
+                }
+                bot.users.get("374929883698036736").send("The Top Miners of this month are:\n" + topminers);
+              }
+              console.log(lastDayOfMonth);
+            }
+            else if(nameCmd === "arenareset" && message.author.id === "374929883698036736"){
+                resetArenas(message); 
+            }
+            else if(nameCmd === "setprefix") {
+              setPrefix(message, args);
             }
             else if(nameCmd === "tutorial" || nameCmd === "start"){
                 TutorialCommand(message);
@@ -2946,6 +3693,9 @@ bot.on('message', message => {
             else if(nameCmd === "vote" || nameCmd === "v"){
                 VoteCommand(message);
             }
+            else if(nameCmd === "prefix") {
+              Prefix(message);
+            }
             else if(nameCmd === "help" || nameCmd === "h"){
                 HelpCommand(message, args);
             }
@@ -2954,6 +3704,9 @@ bot.on('message', message => {
             }
             else if(nameCmd === "stats"){
                 StatsCommand(message);
+            }
+            else if(nameCmd === "brew" || nameCmd === "brewing"){
+                BrewCommand(message, args);
             }
             else if(nameCmd === "shop" || nameCmd === "s"){
                 ShopCommand(message, args);
@@ -3012,6 +3765,9 @@ bot.on('message', message => {
             }
             else if(nameCmd === "pickaxe"){
                 PickaxeCommand(message, args);
+            }
+            else if(nameCmd === "changelog"){
+                ChangeLogCommand(message, args);
             }
             else if(nameCmd === "crate" || nameCmd === "crates"){
                 CrateCommand(message, args);
@@ -3078,6 +3834,32 @@ bot.on('ready', function(){
           Invs[i].ar = -1;
         }
       }
+      
+                var today = new Date();
+                var lastDayOfMonth = new Date(today.getFullYear(), today.getMonth()+1, 0).getTime();
+              if(Date.now() > nextminerreset) { 
+                nextminerreset = lastDayOfMonth;
+                var Tops = [];
+                for(var i = 0;i < Invs.length;i ++){
+                  Tops.push({
+                    name: Invs[i].name,
+                    minerscore: Invs[i].minerscore || 0,
+                    id: Invs[i].id,
+                  });
+                }
+                Tops.sort(function(a, b){return b.minerscore - a.minerscore});
+                var topminers = "";
+                for(var i = 0;i < 10;i ++){
+                  topminers +="**" + Tops[i].minerscore + "** - " + Tops[i].name + " with id " + Tops[i].id + "\n";
+                }
+                bot.users.get("374929883698036736").send("The Top Miners of this month are:\n" + topminers);
+                var today = new Date();
+                var lastDayOfMonth = new Date(today.getFullYear(), today.getMonth()+1, 0);
+                nextminerreset = lastDayOfMonth;
+                for(var i = 0;i < Invs.length;i ++){
+                  Invs[i].minerscore = 0;
+                }
+              }
         BackupQuick();
     }, 60000);
     if(maintenance){
@@ -3094,4 +3876,5 @@ bot.on('ready', function(){
 });
 
 bot.login(process.env.TOKEN);
+
 
