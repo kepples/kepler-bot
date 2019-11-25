@@ -19,11 +19,13 @@ setInterval(() => {
 //Your bot code goes down here 👇
 const Commando = require('discord.js'); //there is no commando
 const fs = require('fs');
+const rawtokens = fs.readFileSync('config.json');  
+const tokens = JSON.parse(rawtokens);  
 const moment = require('moment');
 const bot = new Commando.Client({commandPrefix: 'kb!'});
-const TOKEN = process.env.TOKEN;
+const TOKEN = tokens.TOKEN;
 const DBL = require('dblapi.js');
-const dbl = new DBL(process.env.DBLTOKEN, { webhookServer: server, webhookAuth: 'webhook auth here' }, bot);
+const dbl = new DBL(tokens.DBLTOKEN, { webhookServer: server, webhookAuth: 'webhook auth here' }, bot);
 const profanities = require("profanities");
 
 /** BIG VARIABLES */
