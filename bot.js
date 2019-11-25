@@ -28,8 +28,8 @@ const profanities = require("profanities");
 
 /** BIG VARIABLES */
 var maintenance = false;
-var version = "1.8 Brewers Update";
-var newfeatures = "**NEW FEATURES:**\n- Changable Prefixes\n- View Crafting Recipes\n- New Brewing Stand\n- Any Pickaxe can go to the Nether!\n- Haste, Luck and Magnet potions!\n- Diamonds, Gold and Emeralds also spawn in the nether\n- Blaze Rod Ore\n- Three New Nether Pickaxes\n- Any non trans dimensional pickaxes will take 25% longer to mine with.\n- Upgraded Textures in inventory\n- Miner Score: Resets each month, top 10 get exclusive roles!\n- More People Listed in About Section\n**BUGS FIXED:**\n- Some Emojis wouldn't show up\n- Arena List is broken\nREPORT ANY BUGS YOU FIND TO ME!\n**DEVELOPER FEATURES:**- I can give you more materials\n- Reset Arena will let me nuke all arenas if it breaks.";
+var version = "1.8.1 Brewers Update Bug Fixes";
+var newfeatures = "**NEW FEATURES:**\n-Removed Keplerium from Villager Trading\n- You can get Obsidian and Keplerium from Random Ore\n- Updated Villager Texture\n- You can see an extra decimal point\n**BUG FIXES**\n- Arenas Broken\n- You can only open one page of the crafting list\n- Gitignore? Idk";
 var updatereleased = "2019/07/25"
 var waittime = 3000;
 var regentime = 180000;
@@ -1132,6 +1132,9 @@ var updateInventory = function(I){
   if(I.minerscore === undefined){
     I.minerscore = 0;
   }
+  if(I.lostitems === undefined){
+    I.lostitems = 0;
+  }
 };
 var calcFortune = function(f, I){
   var donat = 1;
@@ -1363,6 +1366,10 @@ var TutorialCommand = function(message){
     //console.log(message.author.username.toString());
     var I = Invs[yourarray];
     updateInventory(I);
+    if(I.lostitems == 0){
+      message.channel.send("If you have lost items from a recent rollback on 2019/11/06, you can go to the kepler miner server by doing kb!server and go to the #restore-data channel and follow the instructions there!");
+      I.lostitems = 1;
+    }
     I.tut = 0;
     Message(`Welcome there ${I.name}!`, `I will walk you thru how to use The Kepler Miner!\nGet started by typing in \`kb!mine r\``, message, "33ee33");
 };
@@ -1377,6 +1384,10 @@ var MineCommand = function(message, args){
     //console.log(message.author.username.toString());
     var I = Invs[yourarray];
   updateInventory(I);
+    if(I.lostitems == 0){
+      message.channel.send("If you have lost items from a recent rollback on 2019/11/06, you can go to the kepler miner server by doing kb!server and go to the #restore-data channel and follow the instructions there!");
+      I.lostitems = 1;
+    }
   if(I.en.cooldown === 0)waittime = 5*1000;
   if(I.en.cooldown === 1)waittime = 4*1000;
   if(I.en.cooldown === 2)waittime = 3*1000;
@@ -1419,23 +1430,31 @@ var MineCommand = function(message, args){
                       var randit = Math.floor(Math.random()*5);
                       if(randit == 0){
                           I.inv.stone +=20;
-                          message.reply("You got 20 stone!");
+                          Message("Random Ore", "You got 20 stone!", message, "ee33ee");
                       }
                       if(randit == 1){
                           I.inv.coal +=20;
-                          message.reply("You got 20 coal!");
+                          Message("Random Ore", "You got 20 coal!", message, "ee33ee");
                       }
                       if(randit == 2){
                           I.inv.iron +=10;
-                          message.reply("You got 10 iron!");
+                          Message("Random Ore", "You got 10 iron!", message, "ee33ee");
                       }
                       if(randit == 3){
-                          I.inv.gold +=5;
-                          message.reply("You got 5 gold!");
+                          I.inv.gold +=10;
+                          Message("Random Ore", "You got 10 gold!", message, "ee33ee");
                       }
                       if(randit == 4){
                           I.inv.diamond +=5;
-                          message.reply("You got 5 diamonds!");
+                          Message("Random Ore", "You got 5 diamonds!", message, "ee33ee");
+                      }
+                      if(randit == 5 && Math.random() > 0.9){
+                          I.inv.keplerium +=1;
+                          Message("Random Ore", "You got 1 Keplerium!", message, "ee33ee");
+                      }
+                      else if(randit == 5){
+                          I.inv.obsidian+=1;
+                          Message("Random Ore", "You got 1 Obsidian!", message, "ee33ee");
                       }
                     }
                   var magnetpot = (I.pots[2] > Date.now()) ? 1.25 : 1;
@@ -1582,7 +1601,7 @@ var MineCommand = function(message, args){
       addPickaxeRoles(message, I);
     }
   else{
-    message.channel.send("Please wait " + (((I.lastmine+waittime)-Date.now())/1000).toFixed(2) + " Seconds!");
+    Message("Too fast!", "Please wait " + (((I.lastmine+waittime)-Date.now())/1000).toFixed(3) + " Seconds!", message, "ee3333");
   }
     
 };
@@ -1608,6 +1627,10 @@ var InvCommand = function(message, args){
         }
         var I = Invs[yourarray];
         updateInventory(I);
+    if(I.lostitems == 0){
+      message.channel.send("If you have lost items from a recent rollback on 2019/11/06, you can go to the kepler miner server by doing kb!server and go to the #restore-data channel and follow the instructions there!");
+      I.lostitems = 1;
+    }
         if(ID === message.author.id){ I.name = message.author.username.toString();}
         var XPP = "";
         for(var i = 0;i < 10;i ++){
@@ -1766,12 +1789,16 @@ var CraftCommand = function(message, args){
     var I = Invs[yourarray];
   
     updateInventory(I);
+    if(I.lostitems == 0){
+      message.channel.send("If you have lost items from a recent rollback on 2019/11/06, you can go to the kepler miner server by doing kb!server and go to the #restore-data channel and follow the instructions there!");
+      I.lostitems = 1;
+    }
     I.name = message.author.username.toString();
   
   if(args[0] === undefined || args[0] === "" || args[0] === "page"){
     var PG = (-1+Math.floor(args[1]))*5 || 0;
     if(PG < 0) PG = 0;
-    if(PG*5 > crecipes.length){ PG = 0;}
+    if(PG > crecipes.length){ PG = 0;}
     var EPG = PG+5;
     if(EPG >= crecipes.length) EPG = crecipes.length;
         var craftingrecipes = "";
@@ -1971,6 +1998,10 @@ var MultiMineCommand = function(message, args){
     var I = Invs[yourarray];
   
     updateInventory(I);
+    if(I.lostitems == 0){
+      message.channel.send("If you have lost items from a recent rollback on 2019/11/06, you can go to the kepler miner server by doing kb!server and go to the #restore-data channel and follow the instructions there!");
+      I.lostitems = 1;
+    }
     if(I.dim !== 0){
       Message("Uh oh!", "You must be in the overworld dimension! use `kb!dimension overworld` to return!", message, "ee3333");
       return;
@@ -2120,7 +2151,7 @@ var MultiMineCommand = function(message, args){
       //console.log(m.length);
     }
   else{
-    message.channel.send("Please wait " + (((I.lastmine+waittime)-Date.now())/1000).toFixed(2) + " Seconds!");
+    Message("Too fast!", "Please wait " + (((I.lastmine+waittime)-Date.now())/1000).toFixed(3) + " Seconds!", message, "ee3333");
   }
     
 };
@@ -2142,6 +2173,10 @@ var ArenaCommand = function(message, args){
     }
     var I = Invs[yourarray];
     updateInventory(I);
+    if(I.lostitems == 0){
+      message.channel.send("If you have lost items from a recent rollback on 2019/11/06, you can go to the kepler miner server by doing kb!server and go to the #restore-data channel and follow the instructions there!");
+      I.lostitems = 1;
+    }
   
     /**
     Possible ways:
@@ -2232,9 +2267,11 @@ var ArenaCommand = function(message, args){
           Message("Uh oh!", "Donators can have a maximum of 8 arenas! Delete one of your older ones!", message, "ee3333");
       }
       var ArenaId = 0;
-      for(var i = 0;i < Arenas.length;i ++){
-        if(Arenas[i].id === ArenaId){
-          ArenaId = Arenas[i].id + 1;
+      for(var j = 0;j < 2;j ++){
+        for(var i = 0;i < Arenas.length;i ++){
+          if(Arenas[i].id === ArenaId){
+            ArenaId ++;
+          }
         }
       }
       Arenas.push({
@@ -2357,6 +2394,10 @@ var TopListCommand = function(message, args){
     var I = Invs[yourarray];
   
     updateInventory(I);
+    if(I.lostitems == 0){
+      message.channel.send("If you have lost items from a recent rollback on 2019/11/06, you can go to the kepler miner server by doing kb!server and go to the #restore-data channel and follow the instructions there!");
+      I.lostitems = 1;
+    }
     I.name = message.author.username.toString();
     
     var thepage = Math.floor(args[1]-1) || 0;
@@ -2369,6 +2410,7 @@ var TopListCommand = function(message, args){
     for(var i = 0;i < Invs.length;i ++){
         TopInvs.push(Invs[i]);
     }
+    if(args[0] !== "levels" && args[0] !== "emeralds" && args[0] !== "minerscore"){ args[0] = "levels";}
     if(args[0] === "levels" && args[0] !== "emeralds" && args[0] !== "minerscore"){ TopInvs.sort(function(a,b){return b.level-a.level;});}
     if(args[0] === "emeralds"){ TopInvs.sort(function(a,b){return b.inv.emerald-a.inv.emerald;});}
     if(args[0] === "minerscore"){ TopInvs.sort(function(a,b){return b.minerscore-a.minerscore;});console.log(args[0])}
@@ -2411,6 +2453,10 @@ var PickaxeCommand = function(message, args){
     var I = Invs[yourarray];
   
     updateInventory(I);
+    if(I.lostitems == 0){
+      message.channel.send("If you have lost items from a recent rollback on 2019/11/06, you can go to the kepler miner server by doing kb!server and go to the #restore-data channel and follow the instructions there!");
+      I.lostitems = 1;
+    }
     I.name = message.author.username.toString();
     var pickk = args[0];
     pickk = pickk.toLowerCase();
@@ -2449,6 +2495,10 @@ var CrateCommand = function(message, args){
     var I = Invs[yourarray];
   
     updateInventory(I);
+    if(I.lostitems == 0){
+      message.channel.send("If you have lost items from a recent rollback on 2019/11/06, you can go to the kepler miner server by doing kb!server and go to the #restore-data channel and follow the instructions there!");
+      I.lostitems = 1;
+    }
     I.name = message.author.username.toString();
     if(args[0] === undefined || args[0] === ""){
       var CR = "";
@@ -2597,10 +2647,14 @@ var AddItemsCommand = function(message, args){
     var I = Invs[yourarray];
   
     updateInventory(I);
+    if(I.lostitems == 0){
+      message.channel.send("If you have lost items from a recent rollback on 2019/11/06, you can go to the kepler miner server by doing kb!server and go to the #restore-data channel and follow the instructions there!");
+      I.lostitems = 1;
+    }
     I.name = message.author.username.toString();
   if(I.id === "374929883698036736" || I.id === "468811298466168852"){
     if(args[0] === "" || args[0] === undefined){
-      Message("Uh oh!", "Do kb!additems <id> <pick:ore:xp:levels:enchant:crates> <item:number:enchanttype:cratetype> [enchantlevel or crate amount]", message, "ee3333");
+      Message("Uh oh!", "Do kb!additems <id> <pick:ore:xp:levels:enchant:crates:dim> <item:number:enchanttype:cratetype> [enchantlevel or crate amount]", message, "ee3333");
       return;
     }
     else{
@@ -2649,6 +2703,10 @@ var AddItemsCommand = function(message, args){
           SI.inv.keplerium +=Math.floor(args[2]);
           Message("Give Command", "Gave " + SI.name + " " + args[2] + " Keplerium!", message);
         }
+        if(args[1] === "emerald"){
+          SI.inv.emerald +=Math.floor(args[2]);
+          Message("Give Command", "Gave " + SI.name + " " + args[2] + " Emeralds!", message);
+        }
         if(args[1] === "xp"){
           SI.xp +=Math.floor(args[2]);
           Message("Give Command", "Gave " + SI.name + " " + args[2] + " XP!", message);
@@ -2660,6 +2718,10 @@ var AddItemsCommand = function(message, args){
         if(args[1] === "donator"){
           SI.donator = !SI.donator;
           Message("Donator Perks", SI.name + " is" + (SI.donator ? "" : "n't") + " a Donator now!", message);
+        }
+        if(args[1] === "dim"){
+          SI.dims[Math.floor(args[2])] = true;
+          Message("Give Command", "Gave " + SI.name + " the #" + args[2] + " Dimension!", message);
         }
         if(args[1] === "crate"){
           SI.crates[Math.floor(args[2])] +=1;
@@ -2835,6 +2897,10 @@ var ShopCommand = function(message, args){
   //console.log(message.author.username.toString());
   var I = Invs[yourarray];
   updateInventory(I);
+    if(I.lostitems == 0){
+      message.channel.send("If you have lost items from a recent rollback on 2019/11/06, you can go to the kepler miner server by doing kb!server and go to the #restore-data channel and follow the instructions there!");
+      I.lostitems = 1;
+    }
   var shoptype = -1;
   var Items = [];
   var Display = "";
@@ -2944,6 +3010,10 @@ var EnchantCommand = function(message){
   //console.log(message.author.username.toString());
   var I = Invs[yourarray];
   updateInventory(I);
+    if(I.lostitems == 0){
+      message.channel.send("If you have lost items from a recent rollback on 2019/11/06, you can go to the kepler miner server by doing kb!server and go to the #restore-data channel and follow the instructions there!");
+      I.lostitems = 1;
+    }
   Message("Your Enchantments", "**Cooldown " + I.en.cooldown + "**\nYou can mine every **" + (5-I.en.cooldown)
           + " seconds\nFortune " + I.en.fortune + "**\nYou get **" + (I.en.fortune*100) + "%** more ores"
           + "\n**Luck " + I.en.luck + "**\nYou are **" + (I.en.luck*5) + "%** more likely to get ores than stone"
@@ -2959,6 +3029,10 @@ var DimensionCommand = function(message, args){
   //console.log(message.author.username.toString());
   var I = Invs[yourarray];
   updateInventory(I);
+    if(I.lostitems == 0){
+      message.channel.send("If you have lost items from a recent rollback on 2019/11/06, you can go to the kepler miner server by doing kb!server and go to the #restore-data channel and follow the instructions there!");
+      I.lostitems = 1;
+    }
   if(args[0] === undefined || args[0] === ""){
       Message("Hmmm", "Usage: `kb!dim <overworld/nether>`", message, "eeee33");
   }
@@ -3006,6 +3080,10 @@ var TradeCommand = function(message, args){ //kb!trade @User/userid type(diamond
   //console.log(message.author.username.toString());
   var I = Invs[yourarray];
   updateInventory(I);
+    if(I.lostitems == 0){
+      message.channel.send("If you have lost items from a recent rollback on 2019/11/06, you can go to the kepler miner server by doing kb!server and go to the #restore-data channel and follow the instructions there!");
+      I.lostitems = 1;
+    }
   
   //Setup user
   if(args[0] === "" || args[0] === undefined || args[0] === "cancel" || args[0] === "confirm"){
@@ -3213,10 +3291,10 @@ var TradeCommand = function(message, args){ //kb!trade @User/userid type(diamond
 };
 
 var conversions = [
-  300, 250, 60, 60, 30, 30, 30, 0.1, //stone, coal, iron, gold, diamond, redstone, lapis, keplerium
+  300, 250, 60, 60, 30, 30, 30 //stone, coal, iron, gold, diamond, redstone, lapis, keplerium
 ];//these are how much of each material for an emerald, this may change overtime with a noise().
 //
-var materialsToBuy = [Stone, Coal, Iron, Gold, Diamond, Redstone, Lapis, Keplerium];
+var materialsToBuy = [Stone, Coal, Iron, Gold, Diamond, Redstone, Lapis];
 var VillagerCommand = function(message, args){
   var yourarray = findYourId(message.author.id);
   if(yourarray == -1){
@@ -3227,6 +3305,10 @@ var VillagerCommand = function(message, args){
   var I = Invs[yourarray];
   updateInventory(I);
   
+    if(I.lostitems == 0){
+      message.channel.send("If you have lost items from a recent rollback on 2019/11/06, you can go to the kepler miner server by doing kb!server and go to the #restore-data channel and follow the instructions there!");
+      I.lostitems = 1;
+    }
   if(I.level < 5){
     Message("Uh oh!", "You must be level 5 to use the villager!", message, "ee3333");
     return;
@@ -3251,13 +3333,13 @@ var VillagerCommand = function(message, args){
         .setAuthor(bot.user.username, bot.user.avatarURL)
         .setTitle('Villager')
         .setDescription(M)
-        .setThumbnail('https://gamepedia.cursecdn.com/minecraft_gamepedia/thumb/5/55/Librarian.png/116px-Librarian.png?version=c47755bed4dfc1ea80b464bbae5a4ef8')
+        .setThumbnail('https://gamepedia.cursecdn.com/minecraft_gamepedia/thumb/0/05/Snowy_Villager_Base.png/135px-Snowy_Villager_Base.png?version=ecce78de1f4790d1cf425c5690c63962')
         .setFooter(`Requested by ${message.author.username}`, message.author.displayAvatarURL)
         .setColor("22ff88");
 
   message.channel.send(embed);
 };
-var buyables = ["stone", "coal", "iron", "gold", "diamond", "redstone", "lapis", "keplerium"];
+var buyables = ["stone", "coal", "iron", "gold", "diamond", "redstone", "lapis"];
 //buy materials from ems
 var GetBuying = function(arg){
   for(var i = 0;i < buyables.length;i ++){
@@ -3277,6 +3359,10 @@ var BuyCommand = function(message, args){//kb!buy <material-to-buy> <number of e
   var I = Invs[yourarray];
   updateInventory(I);
   
+    if(I.lostitems == 0){
+      message.channel.send("If you have lost items from a recent rollback on 2019/11/06, you can go to the kepler miner server by doing kb!server and go to the #restore-data channel and follow the instructions there!");
+      I.lostitems = 1;
+    }
   if(I.level < 5){
     Message("Uh oh!", "You must be level 5 to use the buy command!", message, "ee3333");
     return;
@@ -3327,10 +3413,6 @@ var BuyCommand = function(message, args){//kb!buy <material-to-buy> <number of e
         if(GetBuying(args[1]) === 6){
           I.inv.lapis +=AMT;
           Message("Success!", `You've earned ${AMT} lapis!`, message, "33ee33");
-        }
-        if(GetBuying(args[1]) === 7){
-          I.inv.keplerium +=Math.floor(emvalue/conversions[GetBuying(args[1])])*emtosell;
-          Message("Success!", `You've earned ${AMT} keplerium!`, message, "33ee33");
         }
         I.lb = Date.now();
         investamt --;
@@ -3419,11 +3501,6 @@ var InvestCommand = function(message, args){
       if(I.inv.lapis < amt){Message("Uh oh!", `You don't have enough ${args[0]} !`, message, "ee3333");return;}
         I.inv.lapis -= amt;
         I.inv.emerald += emAmt;
-    }
-    if(GetBuying(args[0]) === 7) { //keplerium
-      if(I.inv.keplerium < amt){Message("Uh oh!", `You don't have enough ${args[0]} !`, message, "ee3333");return;}
-        I.inv.keplerium -= amt;
-        I.inv.emerald += Math.floor(1/conversions[GetBuying(args[0])]);
     }
     console.log(I.inv.emeralds);
     Message("Yay!", `You invested ${amt} ${args[0]} and got ${emAmt} emerald in return! You also got ${remain} ${args[0]} back!`, message, "ee33ee");
@@ -3657,7 +3734,7 @@ bot.on('message', message => {
             if(nameCmd === "about" || nameCmd === "ab"){
                 AboutCommand(message);
               
-                var today = new Date();
+                /*var today = new Date();
                 var lastDayOfMonth = new Date(today.getFullYear(), today.getMonth()+1, 0).getTime();
               if(Date.now() > nextminerreset) { 
                 nextminerreset = lastDayOfMonth;
@@ -3676,7 +3753,7 @@ bot.on('message', message => {
                 }
                 bot.users.get("374929883698036736").send("The Top Miners of this month are:\n" + topminers);
               }
-              console.log(lastDayOfMonth);
+              console.log(lastDayOfMonth);*/
             }
             else if(nameCmd === "arenareset" && message.author.id === "374929883698036736"){
                 resetArenas(message); 
@@ -3791,90 +3868,132 @@ bot.on('message', message => {
 });
 
 /** WHEN THE BOT IS READY DO THIS */
-bot.on('ready', function(){
+bot.on("ready", function() {
   console.log(bot.users.size);
   setInterval(() => {
-    if(emvalue <= 0.3){ emvalue +=(investamt/100)+(Math.random()*0.1);console.log(`Emerald Value is now ${emvalue}`);}
-    else if(emvalue <= 0.6){ emvalue +=(investamt/100)+-0.025+(Math.random()*0.1);console.log(`Emerald Value is now ${emvalue}`);}
-    else if(emvalue <= 1.4){ emvalue +=(investamt/100)+-0.05+(Math.random()*0.1);console.log(`Emerald Value is now ${emvalue}`);}
-    else if(emvalue <= 2){ emvalue +=(investamt/100)+-0.075+(Math.random()*0.1);console.log(`Emerald Value is now ${emvalue}`);}
-    else if(emvalue <= 3){ emvalue +=(investamt/100)+-0.1+(Math.random()*0.1);console.log(`Emerald Value is now ${emvalue}`);}
-    if(emvalue < 0.3){emvalue = 0.3;}
-    if(emvalue > 3){emvalue = 3;}
+    if (emvalue <= 0.3) {
+      emvalue += investamt / 100 + Math.random() * 0.1;
+      console.log(`Emerald Value is now ${emvalue}`);
+    } else if (emvalue <= 0.6) {
+      emvalue += investamt / 100 + -0.025 + Math.random() * 0.1;
+      console.log(`Emerald Value is now ${emvalue}`);
+    } else if (emvalue <= 1.4) {
+      emvalue += investamt / 100 + -0.05 + Math.random() * 0.1;
+      console.log(`Emerald Value is now ${emvalue}`);
+    } else if (emvalue <= 2) {
+      emvalue += investamt / 100 + -0.075 + Math.random() * 0.1;
+      console.log(`Emerald Value is now ${emvalue}`);
+    } else if (emvalue <= 3) {
+      emvalue += investamt / 100 + -0.1 + Math.random() * 0.1;
+      console.log(`Emerald Value is now ${emvalue}`);
+    }
+    if (emvalue < 0.3) {
+      emvalue = 0.3;
+    }
+    if (emvalue > 3) {
+      emvalue = 3;
+    }
   }, 300000);
   setInterval(() => {
-        dbl.postStats(bot.guilds.size);
-        if(!maintenance){
-          if(bottype === 0){
-            bottype ++;
-            bot.user.setActivity(bot.guilds.size + " Servers | kb!start", { type: 'WATCHING' })
-            .then(presence => console.log(`Activity set!`))
-            .catch(console.error);
-            return;
-          }
-          if(bottype === 1){
-            bottype ++;
-            bot.user.setActivity(Invs.length + " Miners | kb!start", { type: 'WATCHING' })
-            .then(presence => console.log(`Activity set!`))
-            .catch(console.error);
-            return;
-          }
-          if(bottype === 2){
-            bottype = 0;
-            bot.user.setActivity(Math.floor(emvalue*100) + "% Em Val | kb!start", { type: 'WATCHING' })
-            .then(presence => console.log(`Activity set!`))
-            .catch(console.error);
-            return;
-          }
-        }
-    }, 600000);
-    setInterval(() => {
-      for(var i = 0;i < Invs.length;i ++){
-        if(Date.now() > Invs[i].lastmine+1800000){
-          Invs[i].ar = -1;
-        }
+    dbl.postStats(bot.guilds.size);
+    if (!maintenance) {
+      if (bottype === 0) {
+        bottype++;
+        bot.user
+          .setActivity(bot.guilds.size + " Servers | kb!start", {
+            type: "WATCHING"
+          })
+          .then(presence => console.log(`Activity set!`))
+          .catch(console.error);
+        return;
       }
-      
-                var today = new Date();
-                var lastDayOfMonth = new Date(today.getFullYear(), today.getMonth()+1, 0).getTime();
-              if(Date.now() > nextminerreset) { 
-                nextminerreset = lastDayOfMonth;
-                var Tops = [];
-                for(var i = 0;i < Invs.length;i ++){
-                  Tops.push({
-                    name: Invs[i].name,
-                    minerscore: Invs[i].minerscore || 0,
-                    id: Invs[i].id,
-                  });
-                }
-                Tops.sort(function(a, b){return b.minerscore - a.minerscore});
-                var topminers = "";
-                for(var i = 0;i < 10;i ++){
-                  topminers +="**" + Tops[i].minerscore + "** - " + Tops[i].name + " with id " + Tops[i].id + "\n";
-                }
-                bot.users.get("374929883698036736").send("The Top Miners of this month are:\n" + topminers);
-                var today = new Date();
-                var lastDayOfMonth = new Date(today.getFullYear(), today.getMonth()+1, 0);
-                nextminerreset = lastDayOfMonth;
-                for(var i = 0;i < Invs.length;i ++){
-                  Invs[i].minerscore = 0;
-                }
-              }
-        BackupQuick();
-    }, 60000);
-    if(maintenance){
-        bot.user.setActivity("Maintenance!!!", { type: 'LISTENING' })
-  .then(presence => console.log(`Activity set!`))
-  .catch(console.error);
+      if (bottype === 1) {
+        bottype++;
+        bot.user
+          .setActivity(Invs.length + " Miners | kb!start", { type: "WATCHING" })
+          .then(presence => console.log(`Activity set!`))
+          .catch(console.error);
+        return;
+      }
+      if (bottype === 2) {
+        bottype = 0;
+        bot.user
+          .setActivity(Math.floor(emvalue * 100) + "% Em Val | kb!start", {
+            type: "WATCHING"
+          })
+          .then(presence => console.log(`Activity set!`))
+          .catch(console.error);
+        return;
+      }
     }
-    else{
-        bot.user.setActivity(bot.guilds.size + " Servers | kb!help", { type: 'WATCHING' })
-  .then(presence => console.log(`Activity set!`))
-  .catch(console.error);
+  }, 600000);
+  setInterval(() => {
+    /*for (var i = 0; i < Invs.length; i++) {
+      if (Date.now() > Invs[i].lastmine + 1800000) {
+        Invs[i].ar = -1;
+      }
     }
-    console.log("Bot is now on :P");
+
+    console.log(nextminerreset + " - " + Date.now());
+    var today = new Date();
+    var lastDayOfMonth = new Date(
+      today.getFullYear(),
+      today.getMonth() + 1,
+      0
+    ).getTime();
+    if (Date.now() > nextminerreset) {
+      nextminerreset = lastDayOfMonth;
+      var Tops = [];
+      for (var i = 0; i < Invs.length; i++) {
+        Tops.push({
+          name: Invs[i].name,
+          minerscore: Invs[i].minerscore || 0,
+          id: Invs[i].id
+        });
+      }
+      Tops.sort(function(a, b) {
+        return b.minerscore - a.minerscore;
+      });
+      var topminers = "";
+      for (var i = 0; i < 10; i++) {
+        topminers +=
+          "**" +
+          Tops[i].minerscore +
+          "** - " +
+          Tops[i].name +
+          " with id " +
+          Tops[i].id +
+          "\n";
+      }
+      bot.users
+        .get("374929883698036736")
+        .send("The Top Miners of this month are:\n" + topminers);
+      var today = new Date();
+      var lastDayOfMonth = new Date(
+        today.getFullYear(),
+        today.getMonth() + 1,
+        0
+      ).getTime();
+      nextminerreset = lastDayOfMonth;
+      for (var i = 0; i < Invs.length; i++) {
+        Invs[i].minerscore = 0;
+      }
+    }*/
+    BackupQuick();
+  }, 60000);
+  if (maintenance) {
+    bot.user
+      .setActivity("Maintenance!!!", { type: "LISTENING" })
+      .then(presence => console.log(`Activity set!`))
+      .catch(console.error);
+  } else {
+    bot.user
+      .setActivity(bot.guilds.size + " Servers | kb!help", { type: "WATCHING" })
+      .then(presence => console.log(`Activity set!`))
+      .catch(console.error);
+  }
+  console.log("Bot is now on :P");
 });
 
 bot.login(process.env.TOKEN);
-
 
