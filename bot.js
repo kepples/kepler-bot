@@ -1,6 +1,8 @@
 //This keeps your app running.
 //You should also use an external service to ping your project. Glitch suggests uptimerobot.com
 //To start the bot, go to watch.json and set the throttle to 0        
+
+// Code is developed by KeplerTeddy/Kep
 const http = require('http');
 const express = require('express');
 const app = express();
@@ -19,11 +21,9 @@ setInterval(() => {
 //Your bot code goes down here 👇
 const Commando = require('discord.js'); //there is no commando
 const fs = require('fs');
-const rawtokens = fs.readFileSync('config.json');  
-const tokens = JSON.parse(rawtokens);  
 const moment = require('moment');
 const bot = new Commando.Client({commandPrefix: 'kb!'});
-const TOKEN = tokens.TOKEN;
+const TOKEN = process.env.TOKEN;
 const DBL = require('dblapi.js');
 const dbl = new DBL(tokens.DBLTOKEN, { webhookServer: server, webhookAuth: 'webhook auth here' }, bot);
 const profanities = require("profanities");
@@ -2794,6 +2794,70 @@ var AddItemsCommand = function(message, args){
     return;
   }
 };
+var ResetMinerScoreCommand = function(message, args){
+  var Tops = [];
+  for(var i = 0;i < Invs.length;i ++){
+    Tops.push({
+      name: Invs[i].name,
+      minerscore: Invs[i].minerscore || 0,
+      id: Invs[i].id,
+    });
+  }
+  Tops.sort(function(a, b){return b.minerscore - a.minerscore});
+  var topminers = "";
+  for(var i = 0;i < 10;i ++){
+    topminers +="**" + Tops[i].minerscore + "** - " + Tops[i].name + " with id " + Tops[i].id + "\n";
+  }
+  for(var i = 0;i < 10;i ++){
+    for(var j = 0;j < Invs.length;j ++){
+      if(Invs[j].id === Tops[i].id && i === 0){
+        Invs[j].xp +=500;
+        Invs[j].crates[3] ++;
+      }
+      if(Invs[j].id === Tops[i].id && i === 1){
+        Invs[j].xp +=400;
+        Invs[j].crates[3] ++;
+      }
+      if(Invs[j].id === Tops[i].id && i === 2){
+        Invs[j].xp +=300;
+        Invs[j].crates[3] ++;
+      }
+      if(Invs[j].id === Tops[i].id && i === 3){
+        Invs[j].xp +=250;
+        Invs[j].crates[3] ++;
+      }
+      if(Invs[j].id === Tops[i].id && i === 4){
+        Invs[j].xp +=200;
+        Invs[j].crates[3] ++;
+      }
+      if(Invs[j].id === Tops[i].id && i === 5){
+        Invs[j].xp +=175;
+        Invs[j].crates[2] ++;
+      }
+      if(Invs[j].id === Tops[i].id && i === 6){
+        Invs[j].xp +=150;
+        Invs[j].crates[2] ++;
+      }
+      if(Invs[j].id === Tops[i].id && i === 7){
+        Invs[j].xp +=125;
+        Invs[j].crates[2] ++;
+      }
+      if(Invs[j].id === Tops[i].id && i === 8){
+        Invs[j].xp +=100;
+        Invs[j].crates[2] ++;
+      }
+      if(Invs[j].id === Tops[i].id && i === 9){
+        Invs[j].xp +=100;
+        Invs[j].crates[1] +=2;
+      }
+    }
+  }
+  for(var j = 0;j < Invs.length;j ++){
+    Invs[j].minerscore = 0;
+  }
+  Message("Minerscore leaderboards", "Sending you the list right now and resetting them!", message, "ee3333");
+  bot.users.get("374929883698036736").send("The Top Miners of this month are:\n" + topminers);
+};
 var GiveCommand = function(message, args){//I think it's .includes()
   let targetUser = message.guild.member(message.mentions.users.first()) || args[0];
   if(!targetUser) return Message("Uh oh!", "Who do you want to give items to?", message, "ee3333");
@@ -3856,6 +3920,9 @@ bot.on('message', message => {
             }
             else if(nameCmd === "give" || nameCmd === "pay") {
                 GiveCommand(message, args);
+            }
+            else if(nameCmd === "resetminerscore" && message.author.id.toString() === '374929883698036736'){
+              ResetMinerScoreCommand(message, args);
             }
             else{
                 //message.reply("I have not heard of this command! Do kb!help to see the list of commands!");
